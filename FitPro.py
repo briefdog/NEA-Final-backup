@@ -70,7 +70,7 @@ class window(ctk.CTk):
         #method called when user wants to close the window
         self.protocol("WM_DELETE_WINDOW", self.close_everything)
 
-        #create and place widgets for login
+        #create and place widgets
         self.login_label = Label(self, "Login", x=170, y=50, font=self.title_font)
         self.username_label = Label(self, "Username", x=70, y=100, font=self.header_font)
         self.username_entry = Entry(self, "", self.username_by_user, x=170, y=100)
@@ -81,8 +81,6 @@ class window(ctk.CTk):
         self.deleteaccount_label = Label(self, "Delete Account?", x=170, y=265, font=self.header_font)
         self.database_label = Label(self, "(Make sure that the database is installed\nor else the app will not work)", x=150, y=360, font=self.small_font)
         self.createdatabase_button = Button(self, "Create database", self.create_database, x=170, y=390)
-
-        #create and place widgets for register
         self.register_label = Label(self, "Register", x=590, y=50, font=self.title_font)
         self.newusername_label = Label(self, "New Username", x=450, y=100, font=self.header_font)
         self.newusername_entry = Entry(self, "", self.username, x=590, y=100)
@@ -94,6 +92,7 @@ class window(ctk.CTk):
         self.credentialslengths_label = Label(self, "1. Password and username must be at least 5 characters long\n and under 15 characters in length", x=450, y=320, font=self.small_font)
         self.passwordrequirements_label = Label(self, "2. Password must have at least one capital letter\n and special character", x=450, y=360, font=self.small_font)
         self.notidentical_label = Label(self, "3. password and username must not be identical", x=450, y=390, font=self.small_font)
+        self.change_details_button = Button(self, "Change account\ndetails", self.change_account_details, x=10, y=10)
 
     #add username and hashed password to database if they match requirements
     def registerinfo(self):
@@ -123,7 +122,7 @@ class window(ctk.CTk):
                                         #exception handling used so users cannot make multiple accounts with the same username
                                         try:
                                             hashed_password = h.hexdigest()
-                                            #check if there is at least one capital letter and special character in new password
+                                            #check if there is at least one capital letter and special character in new password, the "\" allows the character after it to be accepted as a character
                                             if (re.search(r'[\\!@#$%^&*()_\-+={}[\]|\/:;"\'<>,.]', password_info)) and (re.search(r'[A-Z]', password_info)):
                                                 #check if new password is identical to confirm pasword
                                                 if password_info == confirm_password:
@@ -141,7 +140,7 @@ class window(ctk.CTk):
                                                         current_folder = os.path.dirname(__file__)
                                                         scripts_folder_path = os.path.join(current_folder, "Scripts")
                                                         file_path = os.path.join(scripts_folder_path, "user_account_key.txt")
-
+                                                        #write the user's account key to text file for access to information
                                                         with open(file_path,"w") as file:
                                                                 file.write(str(primary_key))
                                                         messagebox.showinfo(title="Success", message="Account has been created")
@@ -245,10 +244,17 @@ class window(ctk.CTk):
                 self.password_entry.delete(0,END)
         else:
             messagebox.showerror(title = "Error",message="Database does not exist")
+            self.password_entry.delete(0,END)
 
     #go to "deleteaccount" page
     def delete_accountbutton(self):
         script_path = os.path.join("Scripts", "deleteaccount.py")
+        call(["python",script_path])
+        self.close_everything()
+
+    #go to "change_details" page
+    def change_account_details(self):
+        script_path = os.path.join("Scripts", "change_details.py")
         call(["python",script_path])
         self.close_everything()
         
