@@ -64,39 +64,45 @@ class window(ctk.CTk):
         current_day = datetime.now()
         current_date = current_day.date()
         plan_name = self.plan_name_var.get()
+        plan_name_length = len(plan_name)
         #check if the user has not entered nothing
         if plan_name != "":
-            try:
-                #make plan entry
-                conn = sqlite3.connect("information.db")
-                cur = conn.cursor()
-                cur.execute("INSERT INTO plan_identification (plan_name, start_date) VALUES (?, ?)", (plan_name, current_date.isoformat()))
+            #check if plan name is not too long
+            if plan_name_length <= 20:
+                try:
+                    #make plan entry
+                    conn = sqlite3.connect("information.db")
+                    cur = conn.cursor()
+                    cur.execute("INSERT INTO plan_identification (plan_name, start_date) VALUES (?, ?)", (plan_name, current_date.isoformat()))
 
-                #get plan key
-                cur.execute("SELECT MAX(id) FROM plan_identification")
-                plan_key_tuple = cur.fetchone()
-                self.plan_key = plan_key_tuple[0]
-                #add user's account key to plan identification
-                cur.execute("UPDATE plan_identification SET user_fk = ? WHERE id = ?", (self.account_key, self.plan_key))
-                #get most recent entry of information from one of the information tables
-                cur.execute("SELECT MAX(main_id) FROM user_personal_info")
-                information_id = cur.fetchone()
-                most_recent_entry = information_id[0]
-                cur.execute("UPDATE user_personal_info SET id = ? WHERE main_id = ?", (self.plan_key,most_recent_entry))
-                cur.execute("UPDATE equipment_access SET id = ? WHERE main_id = ?", (self.plan_key,most_recent_entry))
-                cur.execute("UPDATE nutrition_plan_details SET id = ? WHERE main_id = ?", (self.plan_key,most_recent_entry))
-                conn.commit()
-                conn.close()
-                #write plan key to file so it can be used to display the plan
-                with open("Scripts/user_plan_key.txt","w") as file:
-                    file.write(str(self.plan_key))
-                self.get_info()
-            #use of unique constraint to prevent duplicate plan names
-            except sqlite3.IntegrityError:
-                messagebox.showerror(title = "Error", message = "Plan name already exists in the database")
-            #database can get locked here sometimes
-            except sqlite3.OperationalError as e:
-                print(e)
+                    #get plan key
+                    cur.execute("SELECT MAX(id) FROM plan_identification")
+                    plan_key_tuple = cur.fetchone()
+                    self.plan_key = plan_key_tuple[0]
+                    #add user's account key to plan identification
+                    cur.execute("UPDATE plan_identification SET user_fk = ? WHERE id = ?", (self.account_key, self.plan_key))
+                    #get most recent entry of information from one of the information tables
+                    cur.execute("SELECT MAX(main_id) FROM user_personal_info")
+                    information_id = cur.fetchone()
+                    most_recent_entry = information_id[0]
+                    cur.execute("UPDATE user_personal_info SET id = ? WHERE main_id = ?", (self.plan_key,most_recent_entry))
+                    cur.execute("UPDATE equipment_access SET id = ? WHERE main_id = ?", (self.plan_key,most_recent_entry))
+                    cur.execute("UPDATE nutrition_plan_details SET id = ? WHERE main_id = ?", (self.plan_key,most_recent_entry))
+                    conn.commit()
+                    conn.close()
+                    #write plan key to file so it can be used to display the plan
+                    with open("Scripts/user_plan_key.txt","w") as file:
+                        file.write(str(self.plan_key))
+                    self.get_info()
+                #use of unique constraint to prevent duplicate plan names
+                except sqlite3.IntegrityError:
+                    messagebox.showerror(title = "Error", message = "Plan name already exists in the database")
+                #database can get locked here sometimes
+                except sqlite3.OperationalError as e:
+                    print(e)
+            else:
+                messagebox.showerror(title = "Error", message = "Plan name is too long")
+                self.plan_name_entry.delete(0,END)
         else:
             messagebox.showerror(title = "Error", message = "plan name entry must not be empty")
             self.plan_name_entry.delete(0,END)
@@ -173,7 +179,7 @@ class window(ctk.CTk):
             ("Bicep curls", "Pull", "biceps", self.dumbells),
             ("Hammer curls", "Pull", "biceps", self.dumbells),
             ("Barbell curls", "Pull", "biceps", self.barbell),
-            ("Tricep extensions", "Push", "triceps", self.dumbells)
+            ("Tricep extensions", "Push", "triceps", self.dumbells),
             ("Reverse snow angels\n(using heavy objects)", "Pull", "biceps", None),
             ("Isometric hold", "Push", "shoulders", None),
             ("Superman pull", "Pull", "biceps", None),
@@ -208,8 +214,8 @@ class window(ctk.CTk):
             ("Burpees","Legs,Push","chest,triceps,shoulders,quads,hamstrings,glutes,calves",None),
             ("Lunges","Legs","glutes,hamstrings,quads,calves",None),
             ("Push ups","Push","triceps,chest,shoulders",None),
-            ("Inverted rows\n(using table)", "Pull", "back,shoulders,biceps,traps", None)
-             ("Squats", "Legs", "quads,hamstrings,calves,glutes", None),
+            ("Inverted rows\n(using table)", "Pull", "back,shoulders,biceps,traps", None),
+             ("Squats", "Legs", "quads,hamstrings,calves,glutes", None)
         ]
 
         #list of tuples of cardio exercises
