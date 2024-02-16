@@ -1,4 +1,4 @@
-#sqlite3 was learned from https://www.youtube.com/watch?v=pd-0G0MigUA&t=706s
+#sqlite3 was learned from https://www.youtube.com/watch?v=pd-0G0MigUA&t=706s and the documentation was also used: https://www.sqlite.org/docs.html
 #to access database, I used this SQLite3 Editor extension: https://marketplace.visualstudio.com/items?itemName=yy0931.vscode-sqlite3-editor
 #import sql library
 import sqlite3
