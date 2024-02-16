@@ -51,10 +51,10 @@ class window(ctk.CTk):
         self.create_button = Button(self, "create plan", self.create_plan, x=220,y=150)
 
     def create_plan(self):
-        # collect current date of fitness plan creation and the plan name, 
-        # and it will create the primary key for plan_identification, 
-        # and insert it into all of the other linked tables as a foreign key, 
-        # and it will also insert the user's account key into the plan_identification table
+        #collect current date of fitness plan creation and the plan name, 
+        #and it will create the primary key for plan_identification, 
+        #and insert it into all of the other linked tables as a foreign key, 
+        #and it will also insert the user's account key into the plan_identification table
 
         #get user's account key
         with open("Scripts/user_account_key.txt","r") as f:
@@ -154,6 +154,10 @@ class window(ctk.CTk):
 
         #Lists of tuples are used to store exercise data that will be inserted into the plan
         #For all tuples apart from cardio and core, first column is the exercise, 
+        #I sorted the exercises in the order of how effective they are, based on research and my opinions
+        #they are also sorted in a way that the for loop can access all exercises if needed, 
+        #so it will go through the exercises first that require equipment, and if the user does not have access to those exercises,
+        #the exercises that require no equipment will be selected
         #second column is the exercise day, 
         # third column is the exercise, 
         # fourth row is whether equipment is needed
@@ -161,12 +165,6 @@ class window(ctk.CTk):
         #list of tuples of upper body exercises (isolation exercises)
         self.upper_body_exercises = [
             #use OR AND for equipment row
-            ("Reverse snow angels\n(using heavy objects)", "Pull", "biceps", None),
-            ("Isometric hold", "Push", "shoulders", None),
-            ("Superman pull", "Pull", "biceps", None),
-            ("Chest squeeze", "Push", "shoulders", None),
-            ("Wall push ups", "Push", "shoulders", None),
-            ("Isometric shoulder\nretraction", "Pull", "biceps", None),
             ("Preacher curls", "Pull", "biceps", (self.ez_bar and self.preacher_curl_bench)),
             ("Incline bicep\ncurls","Pull","biceps",(self.dumbells and self.bench)),
             ("Incline hammer\ncurls","Pull","biceps",(self.dumbells and self.bench)),
@@ -176,6 +174,12 @@ class window(ctk.CTk):
             ("Hammer curls", "Pull", "biceps", self.dumbells),
             ("Barbell curls", "Pull", "biceps", self.barbell),
             ("Tricep extensions", "Push", "triceps", self.dumbells)
+            ("Reverse snow angels\n(using heavy objects)", "Pull", "biceps", None),
+            ("Isometric hold", "Push", "shoulders", None),
+            ("Superman pull", "Pull", "biceps", None),
+            ("Chest squeeze", "Push", "shoulders", None),
+            ("Wall push ups", "Push", "shoulders", None),
+            ("Isometric shoulder\nretraction", "Pull", "biceps", None)
         ]
 
         #list of tuples of lower body exercises (isolation exercises)
@@ -190,22 +194,22 @@ class window(ctk.CTk):
         #list of tuples of compound exercises
         self.compound_exercises = [
             ("Pull ups", "Pull", "back,shoulders,biceps,traps", self.pull_up_bar),
-            ("Australian pull ups\n(using table)", "Pull", "back,shoulders,biceps,traps", None),
             ("Dips", "Push", "triceps,chest", self.dip_station),
-            ("Inverted rows\n(using table)", "Pull", "back,shoulders,biceps,traps", None),
             ("Chin ups","Pull","back,shoulders,biceps,traps",self.pull_up_bar),
-            ("Squats", "Legs", "quads,hamstrings,calves,glutes", None),
             ("Deadlift","Legs,Pull","hamstrings,back,glutes,traps",self.barbell),
             ("Bench press","Push","chest,shoulders,triceps",(self.barbell and self.bench)),
-            ("Push ups","Push","triceps,chest,shoulders",None),
             ("Shoulder press","Push","shoulders,triceps,chest",self.shoulder_press_machine),
             ("Laterall pull-down","Pull","lats,biceps,shoulders,traps",self.lateral_pulldown_machine),
             ("Pec fly","Push","shoulders,triceps,biceps",self.pec_fly_machine),
             ("Rows","Pull","lats,shoulders,back,biceps",(self.rowing_machine or self.cables)),
             ("Leg-press","Legs","quads,glutes,hamstrings,calves",(self.leg_press_machine)),
-            ("Lunges","Legs","glutes,hamstrings,quads,calves",None),
+            ("Bulgarian split squat","Legs","quads,glutes,hamstrings,calves",(self.bench and self.dumbells)),
+            ("Australian pull ups\n(using table)", "Pull", "back,shoulders,biceps,traps", None),
             ("Burpees","Legs,Push","chest,triceps,shoulders,quads,hamstrings,glutes,calves",None),
-            ("Bulgarian split squat","Legs","quads,glutes,hamstrings,calves",(self.bench and self.dumbells))
+            ("Lunges","Legs","glutes,hamstrings,quads,calves",None),
+            ("Push ups","Push","triceps,chest,shoulders",None),
+            ("Inverted rows\n(using table)", "Pull", "back,shoulders,biceps,traps", None)
+             ("Squats", "Legs", "quads,hamstrings,calves,glutes", None),
         ]
 
         #list of tuples of cardio exercises
@@ -231,6 +235,9 @@ class window(ctk.CTk):
             self.maintain_weight()
                 
     #one of these three methods will create a blueprint for what the workout plan should consist of
+    #For the workout structure, based on my research and opinions, I have structured the workout in this way so that it will
+    #start with compound exercise(s), then have isolation exercises, then have cardio to finish the workout, so the user will 
+    #not neglect cardiovascular health
     def lose_weight(self):
         self.push_day1 = []
         self.pull_day1 = []
