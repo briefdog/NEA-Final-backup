@@ -91,14 +91,14 @@ class window(ctk.CTk):
         self.question1 = Label(self,"1. What is your current weight? (KG)",font=self.question_font,x=10,y=90)
         self.question2 = Label(self,"2. What is your weight goal? (KG)",font=self.question_font,x=10,y=160)
         self.question3 = Label(self,"3. How much physical activity do you usually do in a week?",font=self.question_font,x=10,y=230)
-        self.question4 = Label(self,"4. Do you have any allergies?",font=self.question_font,x=10,y=300)
+        self.question4 = Label(self,"4. What type of workout plan do you want?",font=self.question_font,x=10,y=300)
         self.question5 = Label(self,"5. Do you have access to the gym?",font=self.question_font,x=10,y=360)
         self.question6 = Label(self,"(If answer to question 5 was yes) \n6. Tick the boxes of the equipment that you have access to:",font=self.question_font,x=10,y=500)
         self.submit_button = Button(self,"Submit",self.get_info,x=250,y=665)
         self.q1_entry = Entry(self,"",self.q1,x=50,y=120)
         self.q2_entry = Entry(self,"",self.q2,x=50,y=190)
         self.q3_combobox = ComboBox(self,values = ["low","moderate","vigorous"],x=50,y=260)
-        self.q4_combobox = ComboBox(self,values = ["yes","no","I don't know"],x=50,y=330)
+        self.q4_combobox = ComboBox(self,values = ["Balanced","Focus on legs","Focus on back","Focus on biceps","Focus on triceps","Focus on shoulders","Focus on chest","Focus on cardio"],x=50,y=330)
         self.q5_combobox = ComboBox(self,values = ["yes","no"],x=50,y=390)
         #create checkboxes for equipment access
         self.dumbells_checkbox = CheckBox(self, "Dumbells", self.dumbells_box, True,False,x=10,y=545)
@@ -218,17 +218,29 @@ class window(ctk.CTk):
             self.rowingmachine = self.rowingmachine_box.get()
             self.preachercurl_bench = self.preachercurl_bench_box.get()
             self.lateralpulldown_machine = self.lateralpulldown_machine_box.get()
-        
+            #check if entry boxes are empty or not
             if (self.current_weight != "") and (self.weight_goal != ""):
-                try:
-                    self.current_weight = float(self.current_weight)
-                    self.weight_goal = float(self.weight_goal)
-                    #go to insert information
-                    self.insert_info()
-                except ValueError:
-                    messagebox.showerror(title="Error", message="Questions 1 and 2 must be numbers")
-                    self.q1_entry.delete(0,END)
-                    self.q2_entry.delete(0,END)
+                #check if checkboxes hold correct values
+                if self.q3 in ("low", "moderate", "vigorous"):
+                    if self.q4 in ("Balanced", "Focus on legs", "Focus on back", "Focus on biceps", "Focus on triceps", "Focus on shoulders", "Focus on chest", "Focus on cardio"):
+                        if self.q5 in ("yes", "no"):
+                            try:
+                                self.current_weight = float(self.current_weight)
+                                self.weight_goal = float(self.weight_goal)
+                                #go to insert information
+                                self.insert_info()
+                            #check if values in the entry boxes are numbers or else error message will appear
+                            except ValueError:
+                                messagebox.showerror(title="Error", message="Questions 1 and 2 must be numbers")
+                                self.q1_entry.delete(0,END)
+                                self.q2_entry.delete(0,END)
+                        #error message will appear if requirements are not met
+                        else:
+                            messagebox.showerror(title = "Error", message = "Only values in the comboboxes must be selected")
+                    else:
+                        messagebox.showerror(title = "Error", message = "Only values in the comboboxes must be selected")
+                else:
+                    messagebox.showerror(title = "Error", message = "Only values in the comboboxes must be selected")
 
             else:
                 messagebox.showerror(title="Error", message="Weight or height cannot be empty")
@@ -244,7 +256,7 @@ class window(ctk.CTk):
             conn = sqlite3.connect("information.db")
             cur = conn.cursor()
             cur.execute(
-                "INSERT INTO user_personal_info (user_fk,current_weight,weight_goal,physical_activity,allergies,gym_access) VALUES (?,?,?,?,?,?)",
+                "INSERT INTO user_personal_info (user_fk,current_weight,weight_goal,physical_activity,workout_plan_type,gym_access) VALUES (?,?,?,?,?,?)",
                         (self.number,self.current_weight,self.weight_goal,self.q3,self.q4,self.q5))
 
             conn.commit()
