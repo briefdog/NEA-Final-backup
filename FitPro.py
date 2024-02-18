@@ -1,4 +1,5 @@
 #import hashing and sql libraries
+#This video was used for understanding hashing in python https://www.youtube.com/watch?v=i-h0CtKde6w&t=575s
 import hashlib
 import sqlite3
 
@@ -8,10 +9,12 @@ import re
 
 #call and subprocess was learned from https://www.youtube.com/watch?v=CUFIjz_U7Mo
 #and https://www.youtube.com/watch?v=2Fp1N6dof0Y respectively
+#These videos gave me understanding of os.path.join and __file__ (to get current folder path) respectively: https://www.youtube.com/watch?v=tJxcKyFMTGo, https://www.youtube.com/watch?v=LVhxqOznPg0
 #import library to switch between files
 from subprocess import call
-import os
 import subprocess
+#import os to access directories
+import os
 #import gui libraries, fundamentals of tkinter was learned from https://www.youtube.com/watch?v=ibf5cx221hk&t=1367s
 #and i used customtkinter documentation: https://customtkinter.tomschimansky.com/documentation/
 import customtkinter as ctk
@@ -19,8 +22,9 @@ from tkinter import messagebox
 from tkinter import *
 from tkinter import font
 
-#I used https://www.youtube.com/watch?v=eaxPK9VIkFM to learn how to use classes with tkinter
-#I learned **kwargs (keywordarguments) from https://www.youtube.com/watch?v=GdSJAZDsCZA
+#I used https://www.youtube.com/watch?v=eaxPK9VIkFM to learn how to use classes with customtkinter
+#I did not understand superclasses so I used this video for understanding: https://www.youtube.com/watch?v=RSl87lqOXDE
+#I learned **kwargs (keywordarguments) from https://www.youtube.com/watch?v=GdSJAZDsCZA, to optimise my code with classes in customtkinter
 
 #class for changing fonts of labels
 class Font(ctk.CTkFont):
@@ -137,10 +141,13 @@ class window(ctk.CTk):
                                                         primary_key = cur.fetchone()
                                                         conn.close()
                                                         #write the primary key value to text file so it can be fetched from the text file as a foreign key
+                                                        #get folder path all the way to current folder
                                                         current_folder = os.path.dirname(__file__)
+                                                        #add subfolder to the folder path
                                                         scripts_folder_path = os.path.join(current_folder, "Scripts")
+                                                        #then join path with file needed
                                                         file_path = os.path.join(scripts_folder_path, "user_account_key.txt")
-                                                        #write the user's account key to text file for access to information
+                                                        #write the user's account key to text file for access to information, by using the folder path created
                                                         with open(file_path,"w") as file:
                                                                 file.write(str(primary_key))
                                                         messagebox.showinfo(title="Success", message="Account has been created")
@@ -197,6 +204,7 @@ class window(ctk.CTk):
     #goes to homepage if credentials are correct
     def login_correct(self):
         messagebox.showinfo(title="Login Success", message="You successfully logged in")
+        #access file subfolder by joining the Scripts with homepage.py file, so that "Scripts\homepage.py can be called"
         script_path = os.path.join("Scripts", "homepage.py")
         call(["python", script_path])
         self.close_everything()
