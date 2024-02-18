@@ -120,7 +120,6 @@ class window(ctk.CTk):
             LIMIT 1
         """, (self.account_key,))
         equipment_access = cur.fetchone() 
-        print(f"equipment access: {equipment_access[3:]}")
         cur.execute("""
             SELECT *
             FROM user_personal_info
@@ -129,7 +128,6 @@ class window(ctk.CTk):
             LIMIT 1
         """, (self.account_key,))
         user_personal_info = cur.fetchone()
-        print(f"user personal info: {user_personal_info[3:]}")
         conn.close()
         #get information from user_personal_info table
         self.current_weight = user_personal_info[3]
@@ -177,12 +175,14 @@ class window(ctk.CTk):
             ("Preacher curls", "Pull", "biceps", (self.ez_bar and self.preacher_curl_bench)),
             ("Incline bicep\ncurls","Pull","biceps",(self.dumbells and self.bench)),
             ("Incline hammer\ncurls","Pull","biceps",(self.dumbells and self.bench)),
-            ("lateral raise", "Push", "shoulders,traps", (self.dumbells or self.cables)),
+            ("lateral raise", "Push", "shoulders", (self.dumbells or self.cables)),
             ("Rear delts", "Push", "shoulders", (self.cables or self.pec_fly_machine)),
             ("Bicep curls", "Pull", "biceps", self.dumbells),
             ("Hammer curls", "Pull", "biceps", self.dumbells),
             ("Barbell curls", "Pull", "biceps", self.barbell),
-            ("Tricep extensions", "Push", "triceps", self.dumbells),
+            ("Tricep extensions\nwith ez bar", "Push", "triceps", self.ez_bar),
+            ("Tricep extensions\nwith cables", "Push", "triceps", self.cables),
+            ("Tricep extensions\nwith dumbells", "Push", "triceps", self.dumbells),
             ("Reverse snow angels\n(using heavy objects)", "Pull", "biceps", None),
             ("Isometric hold", "Push", "shoulders", None),
             ("Superman pull", "Pull", "biceps", None),
@@ -247,6 +247,9 @@ class window(ctk.CTk):
     #For the workout structure, based on my research and opinions, I have structured the workout in this way so that it will
     #start with compound exercise(s), then have isolation exercises, then have cardio to finish the workout, so the user will 
     #not neglect cardiovascular health
+
+    #The structure for all of this code is the same throughout and it repeats, just with different numbers and variables so I will explan each new loop once, 
+    #and the understanding can be applied to all of the remaining code
     def lose_weight(self):
         self.push_day1 = []
         self.pull_day1 = []
@@ -270,16 +273,21 @@ class window(ctk.CTk):
             compound_exercises_per_day = 2
             isolation_exercises_per_day = 3
             cardio_exercises_per_day = 1
-        #counters so loop can end
+        #set counters so loop can end
         compound_counter=0
         isolation_counter = 0
         cardio_counter = 0
         #add compound exercises to push day
         for exercise in self.compound_exercises:
+            #check if exercise is the correct exercise day and if the user has the correct equipment access
+            #also check if stopping condition has been reached by comparing the counter with its corresponding exercise day
             if compound_counter < compound_exercises_per_day and "Push" in exercise[1] and (exercise[3] == 1 or exercise[3]==None):
+                #add to list if requirements are satisfied
                 self.push_day1.append(exercise[0])
+                #increment counter
                 compound_counter += 1
                 if compound_counter == compound_exercises_per_day:
+                    #break loop if counter reaches limit
                     break
 
         compound_counter=0
@@ -369,10 +377,445 @@ class window(ctk.CTk):
                 cardio_counter += 1
                 if cardio_counter == cardio_exercises_per_day:
                     break
-        print(self.push_day1)
-        print(self.legs_day1)
-        print(self.pull_day1)
-        print("lose weight")
+
+        #if user wants a balanced workout plan, the plan will stay the same as it is, but if the user wants focus on a specific muscle group,
+        #an extra isolation exercise will get added into the other exercise which will target that muscle group
+        if self.workout_type != "Balanced":
+            if self.workout_type == "Focus on legs" and self.physical_activity == "low":
+                legs_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.lower_body_exercises:
+                    if "legs" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        legs_exercise = exercise[0]
+                        y += 1
+                self.push_day1[2] = legs_exercise
+                x = 1
+                y = 0
+                for exercise in self.lower_body_exercises:                                              #makes sure that different exercises get added
+                    if "legs" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and legs_exercise != exercise[0]:
+                        legs_exercise = exercise[0]
+                        y += 1
+                self.pull_day1[2] = legs_exercise
+                
+            elif self.workout_type == "Focus on legs" and self.physical_activity == "moderate":
+                legs_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.lower_body_exercises:
+                    if "legs" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        legs_exercise = exercise[0]
+                        y += 1
+                self.push_day1[3] = legs_exercise
+                x = 1
+                y = 0
+                for exercise in self.lower_body_exercises:
+                    if "legs" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and legs_exercise != exercise[0]:
+                        legs_exercise = exercise[0]
+                        y += 1
+                self.pull_day1[3] = legs_exercise
+
+            elif self.workout_type == "Focus on legs" and self.physical_activity == "vigorous":
+                legs_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.lower_body_exercises:
+                    if "legs" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        legs_exercise = exercise[0]
+                        y += 1
+                self.push_day1[3] = legs_exercise
+                x = 1
+                y = 0
+                for exercise in self.lower_body_exercises:
+                    if "legs" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and legs_exercise != exercise[0]:
+                        legs_exercise = exercise[0]
+                        y += 1
+                self.pull_day1[3] = legs_exercise
+
+            elif self.workout_type == "Focus on back" and self.physical_activity == "low":
+                back_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "back" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        back_exercise = exercise[0]
+                        y += 1
+                self.push_day1[2] = back_exercise
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "back" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and back_exercise != exercise[0]:
+                        back_exercise = exercise[0]
+                        y += 1
+                self.legs_day1[2] = back_exercise
+
+            elif self.workout_type == "Focus on back" and self.physical_activity == "moderate":
+                back_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "back" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        back_exercise = exercise[0]
+                        y += 1
+                self.push_day1[3] = back_exercise
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "back" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and back_exercise != exercise[0]:
+                        back_exercise = exercise[0]
+                        y += 1
+                self.legs_day1[3] = back_exercise
+
+            elif self.workout_type == "Focus on back" and self.physical_activity == "vigorous":
+                back_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "back" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        back_exercise = exercise[0]
+                        y += 1
+                self.push_day1[4] = back_exercise
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "back" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and back_exercise != exercise[0]:
+                        back_exercise = exercise[0]
+                        y += 1
+                self.legs_day1[4] = back_exercise
+
+            elif self.workout_type == "Focus on biceps" and self.physical_activity == "low":
+                biceps_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "biceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        biceps_exercise = exercise[0]
+                        y += 1
+                self.push_day1[2] = biceps_exercise
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "biceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and biceps_exercise != exercise[0]:
+                        biceps_exercise = exercise[0]
+                        y += 1
+                self.legs_day1[2] = biceps_exercise
+
+            elif self.workout_type == "Focus on biceps" and self.physical_activity == "moderate":
+                biceps_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "biceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        biceps_exercise = exercise[0]
+                        y += 1
+                self.push_day1[3] = biceps_exercise
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "biceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and biceps_exercise != exercise[0]:
+                        biceps_exercise = exercise[0]
+                        y += 1
+                self.legs_day1[3] = biceps_exercise
+
+            elif self.workout_type == "Focus on biceps" and self.physical_activity == "vigorous":
+                biceps_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "biceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        biceps_exercise = exercise[0]
+                        y += 1
+                self.push_day1[4] = biceps_exercise
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "biceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and biceps_exercise != exercise[0]:
+                        biceps_exercise = exercise[0]
+                        y += 1
+                self.legs_day1[4] = biceps_exercise
+
+            elif self.workout_type == "Focus on triceps" and self.physical_activity == "low":
+                triceps_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "triceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        triceps_exercise = exercise[0]
+                        y += 1
+                self.pull_day1[2] = triceps_exercise
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "triceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and triceps_exercise != exercise[0]:
+                        triceps_exercise = exercise[0]
+                        y += 1
+                self.legs_day1[2] = triceps_exercise
+                if None in self.pull_day1:
+                    x = 1
+                    y = 0
+                    for exercise in self.compound_exercises:
+                        if "triceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                            triceps_exercise = exercise[0]
+                            y += 1
+                    self.pull_day1[2] = triceps_exercise
+
+                if None in self.legs_day1:
+                    x = 1
+                    y = 0
+                    for exercise in self.compound_exercises:
+                        if "triceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and exercise[0] != triceps_exercise:
+                            triceps_exercise = exercise[0]
+                            y += 1
+                    self.legs_day1[2] = triceps_exercise
+
+
+            elif self.workout_type == "Focus on triceps" and self.physical_activity == "moderate":
+                triceps_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "triceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        triceps_exercise = exercise[0]
+                        y += 1
+                self.pull_day1[3] = triceps_exercise
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "triceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and triceps_exercise != exercise[0]:
+                        triceps_exercise = exercise[0]
+                        y += 1
+                self.legs_day1[3] = triceps_exercise
+
+                if None in self.pull_day1:
+                    x = 1
+                    y = 0
+                    for exercise in self.compound_exercises:
+                        if "triceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                            triceps_exercise = exercise[0]
+                            y += 1
+                    self.pull_day1[3] = triceps_exercise
+
+                if None in self.legs_day1:
+                    x = 1
+                    y = 0
+                    for exercise in self.compound_exercises:
+                        if "triceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and exercise[0] != triceps_exercise:
+                            triceps_exercise = exercise[0]
+                            y += 1
+                self.legs_day1[3] = triceps_exercise
+
+            elif self.workout_type == "Focus on triceps" and self.physical_activity == "vigorous":
+                triceps_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "triceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        triceps_exercise = exercise[0]
+                        y += 1
+                self.pull_day1[4] = triceps_exercise
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "triceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and triceps_exercise != exercise[0]:
+                        triceps_exercise = exercise[0]
+                        y += 1
+                self.legs_day1[4] = triceps_exercise
+
+                if None in self.pull_day1:
+                    x = 1
+                    y = 0
+                    for exercise in self.compound_exercises:
+                        if "triceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                            triceps_exercise = exercise[0]
+                            y += 1
+                    self.pull_day1[4] = triceps_exercise
+                    
+                if None in self.legs_day1:
+                    x = 1
+                    y = 0
+                    for exercise in self.compound_exercises:
+                        if "triceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and exercise[0] != triceps_exercise:
+                            triceps_exercise = exercise[0]
+                            y += 1
+                self.legs_day1[4] = triceps_exercise
+
+            elif self.workout_type == "Focus on shoulders" and self.physical_activity == "low":
+                shoulders_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "shoulders" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        shoulders_exercise = exercise[0]
+                        y += 1
+                self.pull_day1[2] = shoulders_exercise
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "shoulders" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and shoulders_exercise != exercise[0]:
+                        shoulders_exercise = exercise[0]
+                        y += 1
+                self.legs_day1[2] = shoulders_exercise
+
+            elif self.workout_type == "Focus on shoulders" and self.physical_activity == "moderate":
+                shoulders_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "shoulders" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        shoulders_exercise = exercise[0]
+                        y += 1
+                self.pull_day1[3] = shoulders_exercise
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "shoulders" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and shoulders_exercise != exercise[0]:
+                        shoulders_exercise = exercise[0]
+                        y += 1
+                self.legs_day1[3] = shoulders_exercise
+
+            elif self.workout_type == "Focus on shoulders" and self.physical_activity == "vigorous":
+                shoulders_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "shoulders" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        shoulders_exercise = exercise[0]
+                        y += 1
+                self.pull_day1[4] = shoulders_exercise
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "shoulders" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and shoulders_exercise != exercise[0]:
+                        shoulders_exercise = exercise[0]
+                        y += 1
+                self.legs_day1[4] = shoulders_exercise
+
+            elif self.workout_type == "Focus on chest" and self.physical_activity == "low":
+                chest_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.compound_exercises:
+                    if "chest" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        chest_exercise = exercise[0]
+                        y += 1
+                self.pull_day1[2] = chest_exercise
+                x = 1
+                y = 0
+                for exercise in self.compound_exercises:
+                    if "chest" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and chest_exercise != exercise[0]:
+                        chest_exercise = exercise[0]
+                        y += 1
+                self.legs_day1[2] = chest_exercise
+
+            elif self.workout_type == "Focus on chest" and self.physical_activity == "moderate":
+                chest_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.compound_exercises:
+                    if "chest" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        chest_exercise = exercise[0]
+                        y += 1
+                self.pull_day1[3] = chest_exercise
+                x = 1
+                y = 0
+                for exercise in self.compound_exercises:
+                    if "chest" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and chest_exercise != exercise[0]:
+                        chest_exercise = exercise[0]
+                        y += 1
+                self.legs_day1[3] = chest_exercise
+
+            elif self.workout_type == "Focus on chest" and self.physical_activity == "vigorous":
+                chest_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.compound_exercises:
+                    if "chest" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        chest_exercise = exercise[0]
+                        y += 1
+                self.pull_day1[4] = chest_exercise
+                x = 1
+                y = 0
+                for exercise in self.compound_exercises:
+                    if "chest" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and chest_exercise != exercise[0]:
+                        chest_exercise = exercise[0]
+                        y += 1
+                self.legs_day1[4] = chest_exercise
+            
+            elif self.workout_type == "Focus on cardio" and self.physical_activity == "low":
+                cardio_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.cardio_exercises:
+                    if (exercise[1] == 1 or exercise[1]==None) and y < x:
+                        cardio_exercise = exercise[0]
+                        y += 1
+                self.pull_day1[2] = cardio_exercise
+                x = 1
+                y = 0
+                for exercise in self.cardio_exercises:
+                    if (exercise[1] == 1 or exercise[1]==None) and y < x and cardio_exercise != exercise[0]:
+                        cardio_exercise = exercise[0]
+                        y += 1
+                self.legs_day1[2] = cardio_exercise
+                x = 1
+                y = 0
+                for exercise in self.cardio_exercises:
+                    if (exercise[1] == 1 or exercise[1]==None) and y < x and cardio_exercise != exercise[0]:
+                        cardio_exercise = exercise[0]
+                        y += 1
+                self.push_day1[2] = cardio_exercise
+
+            elif self.workout_type == "Focus on cardio" and self.physical_activity == "moderate":
+                cardio_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.cardio_exercises:
+                    if (exercise[1] == 1 or exercise[1]==None) and y < x:
+                        cardio_exercise = exercise[0]
+                        y += 1
+                self.pull_day1[3] = cardio_exercise
+                x = 1
+                y = 0
+                for exercise in self.cardio_exercises:
+                    if (exercise[1] == 1 or exercise[1]==None) and y < x and cardio_exercise != exercise[0]:
+                        cardio_exercise = exercise[0]
+                        y += 1
+                self.legs_day1[3] = cardio_exercise
+                x = 1
+                y = 0
+                for exercise in self.cardio_exercises:
+                    if (exercise[1] == 1 or exercise[1]==None) and y < x and cardio_exercise != exercise[0]:
+                        cardio_exercise = exercise[0]
+                        y += 1
+                self.push_day1[3] = cardio_exercise
+
+            elif self.workout_type == "Focus on cardio" and self.physical_activity == "vigorous":
+                cardio_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.cardio_exercises:
+                    if (exercise[1] == 1 or exercise[1]==None) and y < x:
+                        cardio_exercise = exercise[0]
+                        y += 1
+                self.pull_day1[4] = cardio_exercise
+                x = 1
+                y = 0
+                for exercise in self.cardio_exercises:
+                    if (exercise[1] == 1 or exercise[1]==None) and y < x and cardio_exercise != exercise[0]:
+                        cardio_exercise = exercise[0]
+                        y += 1
+                self.legs_day1[4] = cardio_exercise
+                x = 1
+                y = 0
+                for exercise in self.cardio_exercises:
+                    if (exercise[1] == 1 or exercise[1]==None) and y < x and cardio_exercise != exercise[0]:
+                        cardio_exercise = exercise[0]
+                        y += 1
+                self.push_day1[4] = cardio_exercise
+        #workout plan doesn't get changed if user wants a balanced workout
+        else:
+            pass
+
         self.insert_information()
 
     def build_lean_muscle(self):
@@ -496,10 +939,445 @@ class window(ctk.CTk):
                 cardio_counter += 1
                 if cardio_counter == cardio_exercises_per_day:
                     break
-        print(self.push_day2)
-        print(self.legs_day2)
-        print(self.pull_day2)
-        print("build lean muscle")
+
+        #if user wants a balanced workout plan, the plan will stay the same as it is, but if the user wants focus on a specific muscle group,
+        #an extra isolation exercise will get added into the other exercise which will target that muscle group
+        if self.workout_type != "Balanced":
+            if self.workout_type == "Focus on legs" and self.physical_activity == "low":
+                legs_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.lower_body_exercises:
+                    if "legs" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        legs_exercise = exercise[0]
+                        y += 1
+                self.push_day2[2] = legs_exercise
+                x = 1
+                y = 0
+                for exercise in self.lower_body_exercises:                                              #makes sure that different exercises get added
+                    if "legs" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and legs_exercise != exercise[0]:
+                        legs_exercise = exercise[0]
+                        y += 1
+                self.pull_day2[2] = legs_exercise
+                
+            elif self.workout_type == "Focus on legs" and self.physical_activity == "moderate":
+                legs_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.lower_body_exercises:
+                    if "legs" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        legs_exercise = exercise[0]
+                        y += 1
+                self.push_day2[3] = legs_exercise
+                x = 1
+                y = 0
+                for exercise in self.lower_body_exercises:
+                    if "legs" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and legs_exercise != exercise[0]:
+                        legs_exercise = exercise[0]
+                        y += 1
+                self.pull_day2[3] = legs_exercise
+
+            elif self.workout_type == "Focus on legs" and self.physical_activity == "vigorous":
+                legs_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.lower_body_exercises:
+                    if "legs" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        legs_exercise = exercise[0]
+                        y += 1
+                self.push_day2[4] = legs_exercise
+                x = 1
+                y = 0
+                for exercise in self.lower_body_exercises:
+                    if "legs" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and legs_exercise != exercise[0]:
+                        legs_exercise = exercise[0]
+                        y += 1
+                self.pull_day2[4] = legs_exercise
+
+            elif self.workout_type == "Focus on back" and self.physical_activity == "low":
+                back_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "back" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        back_exercise = exercise[0]
+                        y += 1
+                self.push_day2[2] = back_exercise
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "back" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and back_exercise != exercise[0]:
+                        back_exercise = exercise[0]
+                        y += 1
+                self.legs_day2[2] = back_exercise
+
+            elif self.workout_type == "Focus on back" and self.physical_activity == "moderate":
+                back_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "back" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        back_exercise = exercise[0]
+                        y += 1
+                self.push_day2[3] = back_exercise
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "back" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and back_exercise != exercise[0]:
+                        back_exercise = exercise[0]
+                        y += 1
+                self.legs_day2[3] = back_exercise
+
+            elif self.workout_type == "Focus on back" and self.physical_activity == "vigorous":
+                back_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "back" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        back_exercise = exercise[0]
+                        y += 1
+                self.push_day2[4] = back_exercise
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "back" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and back_exercise != exercise[0]:
+                        back_exercise = exercise[0]
+                        y += 1
+                self.legs_day2[4] = back_exercise
+
+            elif self.workout_type == "Focus on biceps" and self.physical_activity == "low":
+                biceps_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "biceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        biceps_exercise = exercise[0]
+                        y += 1
+                self.push_day2[2] = biceps_exercise
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "biceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and biceps_exercise != exercise[0]:
+                        biceps_exercise = exercise[0]
+                        y += 1
+                self.legs_day2[2] = biceps_exercise
+
+            elif self.workout_type == "Focus on biceps" and self.physical_activity == "moderate":
+                biceps_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "biceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        biceps_exercise = exercise[0]
+                        y += 1
+                self.push_day2[3] = biceps_exercise
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "biceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and biceps_exercise != exercise[0]:
+                        biceps_exercise = exercise[0]
+                        y += 1
+                self.legs_day2[3] = biceps_exercise
+
+            elif self.workout_type == "Focus on biceps" and self.physical_activity == "vigorous":
+                biceps_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "biceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        biceps_exercise = exercise[0]
+                        y += 1
+                self.push_day2[4] = biceps_exercise
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "biceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and biceps_exercise != exercise[0]:
+                        biceps_exercise = exercise[0]
+                        y += 1
+                self.legs_day2[4] = biceps_exercise
+
+            elif self.workout_type == "Focus on triceps" and self.physical_activity == "low":
+                triceps_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "triceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        triceps_exercise = exercise[0]
+                        y += 1
+                self.pull_day2[2] = triceps_exercise
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "triceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and triceps_exercise != exercise[0]:
+                        triceps_exercise = exercise[0]
+                        y += 1
+                self.legs_day2[2] = triceps_exercise
+                if None in self.pull_day2:
+                    x = 1
+                    y = 0
+                    for exercise in self.compound_exercises:
+                        if "triceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                            triceps_exercise = exercise[0]
+                            y += 1
+                    self.pull_day1[2] = triceps_exercise
+
+                if None in self.legs_day2:
+                    x = 1
+                    y = 0
+                    for exercise in self.compound_exercises:
+                        if "triceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and exercise[0] != triceps_exercise:
+                            triceps_exercise = exercise[0]
+                            y += 1
+                    self.legs_day2[2] = triceps_exercise
+
+
+            elif self.workout_type == "Focus on triceps" and self.physical_activity == "moderate":
+                triceps_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "triceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        triceps_exercise = exercise[0]
+                        y += 1
+                self.pull_day2[3] = triceps_exercise
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "triceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and triceps_exercise != exercise[0]:
+                        triceps_exercise = exercise[0]
+                        y += 1
+                self.legs_day2[3] = triceps_exercise
+
+                if None in self.pull_day2:
+                    x = 1
+                    y = 0
+                    for exercise in self.compound_exercises:
+                        if "triceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                            triceps_exercise = exercise[0]
+                            y += 1
+                    self.pull_day2[3] = triceps_exercise
+
+                if None in self.legs_day2:
+                    x = 1
+                    y = 0
+                    for exercise in self.compound_exercises:
+                        if "triceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and exercise[0] != triceps_exercise:
+                            triceps_exercise = exercise[0]
+                            y += 1
+                self.legs_day2[3] = triceps_exercise
+
+            elif self.workout_type == "Focus on triceps" and self.physical_activity == "vigorous":
+                triceps_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "triceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        triceps_exercise = exercise[0]
+                        y += 1
+                self.pull_day2[4] = triceps_exercise
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "triceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and triceps_exercise != exercise[0]:
+                        triceps_exercise = exercise[0]
+                        y += 1
+                self.legs_day2[4] = triceps_exercise
+
+                if None in self.pull_day2:
+                    x = 1
+                    y = 0
+                    for exercise in self.compound_exercises:
+                        if "triceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                            triceps_exercise = exercise[0]
+                            y += 1
+                    self.pull_day2[4] = triceps_exercise
+                    
+                if None in self.legs_day2:
+                    x = 1
+                    y = 0
+                    for exercise in self.compound_exercises:
+                        if "triceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and exercise[0] != triceps_exercise:
+                            triceps_exercise = exercise[0]
+                            y += 1
+                self.legs_day2[4] = triceps_exercise
+
+            elif self.workout_type == "Focus on shoulders" and self.physical_activity == "low":
+                shoulders_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "shoulders" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        shoulders_exercise = exercise[0]
+                        y += 1
+                self.pull_day2[2] = shoulders_exercise
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "shoulders" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and shoulders_exercise != exercise[0]:
+                        shoulders_exercise = exercise[0]
+                        y += 1
+                self.legs_day2[2] = shoulders_exercise
+
+            elif self.workout_type == "Focus on shoulders" and self.physical_activity == "moderate":
+                shoulders_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "shoulders" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        shoulders_exercise = exercise[0]
+                        y += 1
+                self.pull_day2[3] = shoulders_exercise
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "shoulders" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and shoulders_exercise != exercise[0]:
+                        shoulders_exercise = exercise[0]
+                        y += 1
+                self.legs_day2[3] = shoulders_exercise
+
+            elif self.workout_type == "Focus on shoulders" and self.physical_activity == "vigorous":
+                shoulders_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "shoulders" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        shoulders_exercise = exercise[0]
+                        y += 1
+                self.pull_day2[4] = shoulders_exercise
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "shoulders" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and shoulders_exercise != exercise[0]:
+                        shoulders_exercise = exercise[0]
+                        y += 1
+                self.legs_day2[4] = shoulders_exercise
+
+            elif self.workout_type == "Focus on chest" and self.physical_activity == "low":
+                chest_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.compound_exercises:
+                    if "chest" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        chest_exercise = exercise[0]
+                        y += 1
+                self.pull_day2[2] = chest_exercise
+                x = 1
+                y = 0
+                for exercise in self.compound_exercises:
+                    if "chest" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and chest_exercise != exercise[0]:
+                        chest_exercise = exercise[0]
+                        y += 1
+                self.legs_day2[2] = chest_exercise
+
+            elif self.workout_type == "Focus on chest" and self.physical_activity == "moderate":
+                chest_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.compound_exercises:
+                    if "chest" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        chest_exercise = exercise[0]
+                        y += 1
+                self.pull_day2[3] = chest_exercise
+                x = 1
+                y = 0
+                for exercise in self.compound_exercises:
+                    if "chest" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and chest_exercise != exercise[0]:
+                        chest_exercise = exercise[0]
+                        y += 1
+                self.legs_day2[3] = chest_exercise
+
+            elif self.workout_type == "Focus on chest" and self.physical_activity == "vigorous":
+                chest_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.compound_exercises:
+                    if "chest" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        chest_exercise = exercise[0]
+                        y += 1
+                self.pull_day2[4] = chest_exercise
+                x = 1
+                y = 0
+                for exercise in self.compound_exercises:
+                    if "chest" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and chest_exercise != exercise[0]:
+                        chest_exercise = exercise[0]
+                        y += 1
+                self.legs_day2[4] = chest_exercise
+            
+            elif self.workout_type == "Focus on cardio" and self.physical_activity == "low":
+                cardio_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.cardio_exercises:
+                    if (exercise[1] == 1 or exercise[1]==None) and y < x:
+                        cardio_exercise = exercise[0]
+                        y += 1
+                self.pull_day2[2] = cardio_exercise
+                x = 1
+                y = 0
+                for exercise in self.cardio_exercises:
+                    if (exercise[1] == 1 or exercise[1]==None) and y < x and cardio_exercise != exercise[0]:
+                        cardio_exercise = exercise[0]
+                        y += 1
+                self.legs_day2[2] = cardio_exercise
+                x = 1
+                y = 0
+                for exercise in self.cardio_exercises:
+                    if (exercise[1] == 1 or exercise[1]==None) and y < x and cardio_exercise != exercise[0]:
+                        cardio_exercise = exercise[0]
+                        y += 1
+                self.push_day2[2] = cardio_exercise
+
+            elif self.workout_type == "Focus on cardio" and self.physical_activity == "moderate":
+                cardio_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.cardio_exercises:
+                    if (exercise[1] == 1 or exercise[1]==None) and y < x:
+                        cardio_exercise = exercise[0]
+                        y += 1
+                self.pull_day2[3] = cardio_exercise
+                x = 1
+                y = 0
+                for exercise in self.cardio_exercises:
+                    if (exercise[1] == 1 or exercise[1]==None) and y < x and cardio_exercise != exercise[0]:
+                        cardio_exercise = exercise[0]
+                        y += 1
+                self.legs_day2[3] = cardio_exercise
+                x = 1
+                y = 0
+                for exercise in self.cardio_exercises:
+                    if (exercise[1] == 1 or exercise[1]==None) and y < x and cardio_exercise != exercise[0]:
+                        cardio_exercise = exercise[0]
+                        y += 1
+                self.push_day2[3] = cardio_exercise
+
+            elif self.workout_type == "Focus on cardio" and self.physical_activity == "vigorous":
+                cardio_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.cardio_exercises:
+                    if (exercise[1] == 1 or exercise[1]==None) and y < x:
+                        cardio_exercise = exercise[0]
+                        y += 1
+                self.pull_day2[4] = cardio_exercise
+                x = 1
+                y = 0
+                for exercise in self.cardio_exercises:
+                    if (exercise[1] == 1 or exercise[1]==None) and y < x and cardio_exercise != exercise[0]:
+                        cardio_exercise = exercise[0]
+                        y += 1
+                self.legs_day2[4] = cardio_exercise
+                x = 1
+                y = 0
+                for exercise in self.cardio_exercises:
+                    if (exercise[1] == 1 or exercise[1]==None) and y < x and cardio_exercise != exercise[0]:
+                        cardio_exercise = exercise[0]
+                        y += 1
+                self.push_day2[4] = cardio_exercise
+        #workout plan doesn't get changed if user wants a balanced workout
+        else:
+            pass
+
         self.insert_information()
 
     def maintain_weight(self):
@@ -623,10 +1501,447 @@ class window(ctk.CTk):
                 cardio_counter += 1
                 if cardio_counter == cardio_exercises_per_day:
                     break
-        print(self.push_day3)
-        print(self.legs_day3)
-        print(self.pull_day3)
-        print("maintain weight")
+
+        #if user wants a balanced workout plan, the plan will stay the same as it is, but if the user wants focus on a specific muscle group,
+        #an extra isolation exercise will get added into the other exercise which will target that muscle group
+
+        if self.workout_type != "Balanced":
+            if self.workout_type == "Focus on legs" and self.physical_activity == "low":
+                legs_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.lower_body_exercises:
+                    if "legs" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        legs_exercise = exercise[0]
+                        y += 1
+                self.push_day3[2] = legs_exercise
+                x = 1
+                y = 0
+                for exercise in self.lower_body_exercises:                                              #makes sure that different exercises get added
+                    if "legs" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and legs_exercise != exercise[0]:
+                        legs_exercise = exercise[0]
+                        y += 1
+                self.pull_day3[2] = legs_exercise
+                
+            elif self.workout_type == "Focus on legs" and self.physical_activity == "moderate":
+                legs_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.lower_body_exercises:
+                    if "legs" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        legs_exercise = exercise[0]
+                        y += 1
+                self.push_day3[3] = legs_exercise
+                x = 1
+                y = 0
+                for exercise in self.lower_body_exercises:
+                    if "legs" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and legs_exercise != exercise[0]:
+                        legs_exercise = exercise[0]
+                        y += 1
+                self.pull_day3[3] = legs_exercise
+
+            elif self.workout_type == "Focus on legs" and self.physical_activity == "vigorous":
+                legs_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.lower_body_exercises:
+                    if "legs" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        legs_exercise = exercise[0]
+                        y += 1
+                self.push_day3[4] = legs_exercise
+                x = 1
+                y = 0
+                for exercise in self.lower_body_exercises:
+                    if "legs" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and legs_exercise != exercise[0]:
+                        legs_exercise = exercise[0]
+                        y += 1
+                self.pull_day3[4] = legs_exercise
+
+            elif self.workout_type == "Focus on back" and self.physical_activity == "low":
+                back_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "back" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        back_exercise = exercise[0]
+                        y += 1
+                self.push_day3[2] = back_exercise
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "back" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and back_exercise != exercise[0]:
+                        back_exercise = exercise[0]
+                        y += 1
+                self.legs_day3[2] = back_exercise
+
+            elif self.workout_type == "Focus on back" and self.physical_activity == "moderate":
+                back_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "back" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        back_exercise = exercise[0]
+                        y += 1
+                self.push_day3[3] = back_exercise
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "back" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and back_exercise != exercise[0]:
+                        back_exercise = exercise[0]
+                        y += 1
+                self.legs_day3[3] = back_exercise
+
+            elif self.workout_type == "Focus on back" and self.physical_activity == "vigorous":
+                back_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "back" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        back_exercise = exercise[0]
+                        y += 1
+                self.push_day3[4] = back_exercise
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "back" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and back_exercise != exercise[0]:
+                        back_exercise = exercise[0]
+                        y += 1
+                self.legs_day3[4] = back_exercise
+
+            elif self.workout_type == "Focus on biceps" and self.physical_activity == "low":
+                biceps_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "biceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        biceps_exercise = exercise[0]
+                        y += 1
+                self.push_day3[2] = biceps_exercise
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "biceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and biceps_exercise != exercise[0]:
+                        biceps_exercise = exercise[0]
+                        y += 1
+                self.legs_day3[2] = biceps_exercise
+
+            elif self.workout_type == "Focus on biceps" and self.physical_activity == "moderate":
+                biceps_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "biceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        biceps_exercise = exercise[0]
+                        y += 1
+                self.push_day3[3] = biceps_exercise
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "biceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and biceps_exercise != exercise[0]:
+                        biceps_exercise = exercise[0]
+                        y += 1
+                self.legs_day3[3] = biceps_exercise
+
+            elif self.workout_type == "Focus on biceps" and self.physical_activity == "vigorous":
+                biceps_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "biceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        biceps_exercise = exercise[0]
+                        y += 1
+                self.push_day3[4] = biceps_exercise
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "biceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and biceps_exercise != exercise[0]:
+                        biceps_exercise = exercise[0]
+                        y += 1
+                self.legs_day3[4] = biceps_exercise
+
+            elif self.workout_type == "Focus on triceps" and self.physical_activity == "low":
+                triceps_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "triceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        triceps_exercise = exercise[0]
+                        y += 1
+                self.pull_day3[2] = triceps_exercise
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "triceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and triceps_exercise != exercise[0]:
+                        triceps_exercise = exercise[0]
+                        y += 1
+                self.legs_day3[2] = triceps_exercise
+
+                if None in self.pull_day3:
+                    x = 1
+                    y = 0
+                    for exercise in self.compound_exercises:
+                        if "triceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                            triceps_exercise = exercise[0]
+                            y += 1
+                    self.pull_day3[2] = triceps_exercise
+
+                if None in self.legs_day3:
+                    x = 1
+                    y = 0
+                    for exercise in self.compound_exercises:
+                        if "triceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and exercise[0] != triceps_exercise:
+                            triceps_exercise = exercise[0]
+                            y += 1
+                    self.legs_day3[2] = triceps_exercise
+
+
+            elif self.workout_type == "Focus on triceps" and self.physical_activity == "moderate":
+                triceps_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "triceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        triceps_exercise = exercise[0]
+                        y += 1
+                self.pull_day3[3] = triceps_exercise
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "triceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and triceps_exercise != exercise[0]:
+                        triceps_exercise = exercise[0]
+                        y += 1
+                self.legs_day3[3] = triceps_exercise
+
+                if None in self.pull_day3:
+                    x = 1
+                    y = 0
+                    for exercise in self.compound_exercises:
+                        if "triceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                            triceps_exercise = exercise[0]
+                            y += 1
+                    self.pull_day3[3] = triceps_exercise
+
+                if None in self.legs_day3:
+                    x = 1
+                    y = 0
+                    for exercise in self.compound_exercises:
+                        if "triceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and exercise[0] != triceps_exercise:
+                            triceps_exercise = exercise[0]
+                            y += 1
+                self.legs_day3[3] = triceps_exercise
+
+            elif self.workout_type == "Focus on triceps" and self.physical_activity == "vigorous":
+                triceps_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "triceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        triceps_exercise = exercise[0]
+                        y += 1
+                self.pull_day3[4] = triceps_exercise
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "triceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and triceps_exercise != exercise[0]:
+                        triceps_exercise = exercise[0]
+                        y += 1
+                self.legs_day3[4] = triceps_exercise
+
+                if None in self.pull_day3:
+                    x = 1
+                    y = 0
+                    for exercise in self.compound_exercises:
+                        if "triceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                            triceps_exercise = exercise[0]
+                            y += 1
+                    self.pull_day3[4] = triceps_exercise
+                    
+                if None in self.legs_day3:
+                    x = 1
+                    y = 0
+                    for exercise in self.compound_exercises:
+                        if "triceps" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and exercise[0] != triceps_exercise:
+                            triceps_exercise = exercise[0]
+                            y += 1
+                self.legs_day3[4] = triceps_exercise
+
+            elif self.workout_type == "Focus on shoulders" and self.physical_activity == "low":
+                shoulders_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "shoulders" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        shoulders_exercise = exercise[0]
+                        y += 1
+                self.pull_day3[2] = shoulders_exercise
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "shoulders" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and shoulders_exercise != exercise[0]:
+                        shoulders_exercise = exercise[0]
+                        y += 1
+                self.legs_day3[2] = shoulders_exercise
+
+            elif self.workout_type == "Focus on shoulders" and self.physical_activity == "moderate":
+                shoulders_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "shoulders" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        shoulders_exercise = exercise[0]
+                        y += 1
+                self.pull_day3[3] = shoulders_exercise
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "shoulders" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and shoulders_exercise != exercise[0]:
+                        shoulders_exercise = exercise[0]
+                        y += 1
+                self.legs_day3[3] = shoulders_exercise
+
+            elif self.workout_type == "Focus on shoulders" and self.physical_activity == "vigorous":
+                shoulders_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "shoulders" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        shoulders_exercise = exercise[0]
+                        y += 1
+                self.pull_day3[4] = shoulders_exercise
+                x = 1
+                y = 0
+                for exercise in self.upper_body_exercises:
+                    if "shoulders" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and shoulders_exercise != exercise[0]:
+                        shoulders_exercise = exercise[0]
+                        y += 1
+                self.legs_day3[4] = shoulders_exercise
+
+            elif self.workout_type == "Focus on chest" and self.physical_activity == "low":
+                chest_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.compound_exercises:
+                    if "chest" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        chest_exercise = exercise[0]
+                        y += 1
+                self.pull_day3[2] = chest_exercise
+                x = 1
+                y = 0
+                for exercise in self.compound_exercises:
+                    if "chest" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and chest_exercise != exercise[0]:
+                        chest_exercise = exercise[0]
+                        y += 1
+                self.legs_day3[2] = chest_exercise
+
+            elif self.workout_type == "Focus on chest" and self.physical_activity == "moderate":
+                chest_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.compound_exercises:
+                    if "chest" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        chest_exercise = exercise[0]
+                        y += 1
+                self.pull_day3[3] = chest_exercise
+                x = 1
+                y = 0
+                for exercise in self.compound_exercises:
+                    if "chest" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and chest_exercise != exercise[0]:
+                        chest_exercise = exercise[0]
+                        y += 1
+                self.legs_day3[3] = chest_exercise
+
+            elif self.workout_type == "Focus on chest" and self.physical_activity == "vigorous":
+                chest_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.compound_exercises:
+                    if "chest" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
+                        chest_exercise = exercise[0]
+                        y += 1
+                self.pull_day3[4] = chest_exercise
+                x = 1
+                y = 0
+                for exercise in self.compound_exercises:
+                    if "chest" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and chest_exercise != exercise[0]:
+                        chest_exercise = exercise[0]
+                        y += 1
+                self.legs_day3[4] = chest_exercise
+            
+            elif self.workout_type == "Focus on cardio" and self.physical_activity == "low":
+                cardio_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.cardio_exercises:
+                    if (exercise[1] == 1 or exercise[1]==None) and y < x:
+                        cardio_exercise = exercise[0]
+                        y += 1
+                self.pull_day3[2] = cardio_exercise
+                x = 1
+                y = 0
+                for exercise in self.cardio_exercises:
+                    if (exercise[1] == 1 or exercise[1]==None) and y < x and cardio_exercise != exercise[0]:
+                        cardio_exercise = exercise[0]
+                        y += 1
+                self.legs_day3[2] = cardio_exercise
+                x = 1
+                y = 0
+                for exercise in self.cardio_exercises:
+                    if (exercise[1] == 1 or exercise[1]==None) and y < x and cardio_exercise != exercise[0]:
+                        cardio_exercise = exercise[0]
+                        y += 1
+                self.push_day3[2] = cardio_exercise
+
+            elif self.workout_type == "Focus on cardio" and self.physical_activity == "moderate":
+                cardio_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.cardio_exercises:
+                    if (exercise[1] == 1 or exercise[1]==None) and y < x:
+                        cardio_exercise = exercise[0]
+                        y += 1
+                self.pull_day3[3] = cardio_exercise
+                x = 1
+                y = 0
+                for exercise in self.cardio_exercises:
+                    if (exercise[1] == 1 or exercise[1]==None) and y < x and cardio_exercise != exercise[0]:
+                        cardio_exercise = exercise[0]
+                        y += 1
+                self.legs_day3[3] = cardio_exercise
+                x = 1
+                y = 0
+                for exercise in self.cardio_exercises:
+                    if (exercise[1] == 1 or exercise[1]==None) and y < x and cardio_exercise != exercise[0]:
+                        cardio_exercise = exercise[0]
+                        y += 1
+                self.push_day3[3] = cardio_exercise
+
+            elif self.workout_type == "Focus on cardio" and self.physical_activity == "vigorous":
+                cardio_exercise = None
+                x = 1
+                y = 0
+                for exercise in self.cardio_exercises:
+                    if (exercise[1] == 1 or exercise[1]==None) and y < x:
+                        cardio_exercise = exercise[0]
+                        y += 1
+                self.pull_day3[4] = cardio_exercise
+                x = 1
+                y = 0
+                for exercise in self.cardio_exercises:
+                    if (exercise[1] == 1 or exercise[1]==None) and y < x and cardio_exercise != exercise[0]:
+                        cardio_exercise = exercise[0]
+                        y += 1
+                self.legs_day3[4] = cardio_exercise
+                x = 1
+                y = 0
+                for exercise in self.cardio_exercises:
+                    if (exercise[1] == 1 or exercise[1]==None) and y < x and cardio_exercise != exercise[0]:
+                        cardio_exercise = exercise[0]
+                        y += 1
+                self.push_day3[4] = cardio_exercise
+        #workout plan doesn't get changed if user wants a balanced workout
+        else:
+            pass
+
         self.insert_information()
 
     #method will insert the exercises into the correct fields in the workout_plan_details_table
