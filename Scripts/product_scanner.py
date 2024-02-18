@@ -3,7 +3,7 @@
 #I used these for documentation: https://openfoodfacts.github.io/openfoodfacts-server/api/ref-v2/ , https://openfoodfacts.github.io/openfoodfacts-server/api/tutorial-off-api/
 #API says that one barcode scan equals one API call
 #100 calls a minute
-#This API has access to 3,063,704 products from the world (numbers may change), as of right now, meaning not every product is on there
+#This API has access to 3,063,704 products from the world (numbers may change), as of right now, meaning products are limited
 #I tested the API by taking barcodes from https://world.openfoodfacts.org/
 
 #import requests for HTTP requests
@@ -15,15 +15,15 @@ from tkinter import messagebox
 from tkinter import *
 from tkinter import font
 import customtkinter as ctk
+#import libraries to access images from API
 from PIL import Image, ImageTk
 from io import BytesIO
 
 import os
-import sys
 
 #the image is displayed bigger when it is converted into tkinter format than in customtkinter,
-#so this code was used to prevent warning messages from coming up
-sys.stderr = open(os.devnull, 'w')
+#so warning messages may come up as I am using the tkinter format in customtkinter, even though it works
+
 
 #import subprocess for switching between python scripts
 import subprocess
@@ -76,7 +76,7 @@ class window(ctk.CTk):
         try:
             response = requests.get(url)
         except:
-            messagebox.showerror(title = "Error", message = "Network error")
+            messagebox.showerror(title = "Error", message = "Network error\nMake sure to check your internet connection")
             return
         if response.status_code == 200:
             try:
@@ -127,7 +127,7 @@ class window(ctk.CTk):
                     nutri_score.place(x=100,y=470)
                     #go to display image method
                     self.fetch_and_display_image()
-
+                #show error messages if there are any problems connecting to the api or retrieving the information
                 else:
                     messagebox.showerror(title = "error", message = "Product not found.")
             except requests.exceptions.JSONDecodeError as e:
