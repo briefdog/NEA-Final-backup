@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS user_personal_info (
     current_weight FLOAT,
     weight_goal FLOAT,
     physical_activity VARCHAR(255),
-    allergies BOOLEAN,
+    workout_plan_type VARCHAR(255),
     gym_access BOOLEAN,
     FOREIGN KEY(user_fk) REFERENCES users(id) ON DELETE CASCADE,   -- if user deletes account, all of the user's data will also get deleted 
     FOREIGN KEY(id) REFERENCES plan_identification(id) ON DELETE CASCADE   -- if user deletes the fitness plan, all of the information associated with it will get deleted too
@@ -100,26 +100,6 @@ CREATE TABLE IF NOT EXISTS workout_plan_details (
     legs_ex_6 VARCHAR(255),
     FOREIGN KEY(user_fk) REFERENCES users(id) ON DELETE CASCADE,            -- if user deletes account, all of the user's data will also get deleted
     FOREIGN KEY(id) REFERENCES plan_identification(id) ON DELETE CASCADE      -- if user deletes the fitness plan, all of the information associated with it will get deleted too
-)
-""")
-
-#create table to store information about nutrition plan
-cur.execute("""
-CREATE TABLE IF NOT EXISTS nutrition_plan_details (
-    main_id INTEGER PRIMARY KEY,  -- Primary key used so user can discard the information if needed, and used to identify most recent entry into the table
-    id INTEGER,               -- Foreign key referencing to plan_identification      
-    user_fk INTEGER,          -- Foreign key referencing the id column in the users table
-    breakfast_1 VARCHAR(255),
-    lunch_1 VARCHAR(255),
-    dinner_1 VARCHAR(255),
-    breakfast_2 VARCHAR(255),
-    lunch_2 VARCHAR(255),
-    dinner_2 VARCHAR(255),
-    breakfast_3 VARCHAR(255),
-    lunch_3 VARCHAR(255),
-    dinner_3 VARCHAR(255),
-    FOREIGN KEY(user_fk) REFERENCES users(id) ON DELETE CASCADE,            -- if user deletes account, all of the user's data will also get deleted
-    FOREIGN KEY(id) REFERENCES plan_identification(id) ON DELETE CASCADE       -- if user deletes the fitness plan, all of the information associated with it will get deleted too
 )
 """)
 
