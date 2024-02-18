@@ -87,10 +87,11 @@ class window(ctk.CTk):
                     most_recent_entry = information_id[0]
                     cur.execute("UPDATE user_personal_info SET id = ? WHERE main_id = ?", (self.plan_key,most_recent_entry))
                     cur.execute("UPDATE equipment_access SET id = ? WHERE main_id = ?", (self.plan_key,most_recent_entry))
-                    cur.execute("UPDATE nutrition_plan_details SET id = ? WHERE main_id = ?", (self.plan_key,most_recent_entry))
                     conn.commit()
                     conn.close()
                     #write plan key to file so it can be used to display the plan
+                    #access subfolder, so the text file gets written to inside the subfolder, 
+                    #and so it does not get created outside the subfolder, for better file organisation
                     with open("Scripts/user_plan_key.txt","w") as file:
                         file.write(str(self.plan_key))
                     self.get_info()
@@ -134,6 +135,7 @@ class window(ctk.CTk):
         self.current_weight = user_personal_info[3]
         self.weight_goal = user_personal_info[4]
         self.physical_activity = user_personal_info[5]
+        self.workout_type = user_personal_info[6]
         self.gym_access = user_personal_info[7]
         #get information from eqipment_access table
         self.dumbells = equipment_access[3]
@@ -164,9 +166,10 @@ class window(ctk.CTk):
         #they are also sorted in a way that the for loop can access all exercises if needed, 
         #so it will go through the exercises first that require equipment, and if the user does not have access to those exercises,
         #the exercises that require no equipment will be selected
+        #first column is the exercise name,
         #second column is the exercise day, 
-        # third column is the exercise, 
-        # fourth row is whether equipment is needed
+        #third column is the muscle group the exercise is targeting, 
+        #fourth row is whether equipment is needed
 
         #list of tuples of upper body exercises (isolation exercises)
         self.upper_body_exercises = [
@@ -190,32 +193,32 @@ class window(ctk.CTk):
 
         #list of tuples of lower body exercises (isolation exercises)
         self.lower_body_exercises = [
-            ("Leg extensions", "Legs", "quads", self.leg_extensions_machine),
-            ("Leg curls", "Legs", "hamstrings", self.leg_curl_machine),
-            ("Calf raises", "Legs", "calves", None),
-            ("Glute bridges", "Legs", "glutes", None),
-            ("Standing lateral\nleg raise", "Legs", "glutes", None)
+            ("Leg extensions", "Legs", "legs", self.leg_extensions_machine),
+            ("Leg curls", "Legs", "legs", self.leg_curl_machine),
+            ("Calf raises", "Legs", "legs", None),
+            ("Glute bridges", "Legs", "legs", None),
+            ("Standing lateral\nleg raise", "Legs", "legs", None)
         ]
 
         #list of tuples of compound exercises
         self.compound_exercises = [
-            ("Pull ups", "Pull", "back,shoulders,biceps,traps", self.pull_up_bar),
+            ("Pull ups", "Pull", "back,shoulders,biceps", self.pull_up_bar),
             ("Dips", "Push", "triceps,chest", self.dip_station),
-            ("Chin ups","Pull","back,shoulders,biceps,traps",self.pull_up_bar),
-            ("Deadlift","Legs,Pull","hamstrings,back,glutes,traps",self.barbell),
+            ("Chin ups","Pull","back,shoulders,biceps",self.pull_up_bar),
+            ("Deadlift","Legs,Pull","back,legs",self.barbell),
             ("Bench press","Push","chest,shoulders,triceps",(self.barbell and self.bench)),
             ("Shoulder press","Push","shoulders,triceps,chest",self.shoulder_press_machine),
-            ("Laterall pull-down","Pull","lats,biceps,shoulders,traps",self.lateral_pulldown_machine),
+            ("Laterall pull-down","Pull","biceps,shoulders",self.lateral_pulldown_machine),
             ("Pec fly","Push","shoulders,triceps,biceps",self.pec_fly_machine),
-            ("Rows","Pull","lats,shoulders,back,biceps",(self.rowing_machine or self.cables)),
-            ("Leg-press","Legs","quads,glutes,hamstrings,calves",(self.leg_press_machine)),
-            ("Bulgarian split squat","Legs","quads,glutes,hamstrings,calves",(self.bench and self.dumbells)),
-            ("Australian pull ups\n(using table)", "Pull", "back,shoulders,biceps,traps", None),
-            ("Burpees","Legs,Push","chest,triceps,shoulders,quads,hamstrings,glutes,calves",None),
-            ("Lunges","Legs","glutes,hamstrings,quads,calves",None),
+            ("Rows","Pull","shoulders,back,biceps",(self.rowing_machine or self.cables)),
+            ("Leg-press","Legs","legs",(self.leg_press_machine)),
+            ("Bulgarian split squat","Legs","legs",(self.bench and self.dumbells)),
+            ("Australian pull ups\n(using table)", "Pull", "back,shoulders,biceps", None),
+            ("Burpees","Legs,Push","chest,triceps,shoulders,legs",None),
+            ("Lunges","Legs","legs",None),
             ("Push ups","Push","triceps,chest,shoulders",None),
-            ("Inverted rows\n(using table)", "Pull", "back,shoulders,biceps,traps", None),
-             ("Squats", "Legs", "quads,hamstrings,calves,glutes", None)
+            ("Inverted rows\n(using table)", "Pull", "back,shoulders,biceps", None),
+             ("Squats", "Legs", "legs", None)
         ]
 
         #list of tuples of cardio exercises
