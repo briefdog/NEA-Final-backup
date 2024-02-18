@@ -51,6 +51,7 @@ class window(ctk.CTk):
         self.day_font = Font("Helvetica", 30, "bold")
         self.exercise_font = Font("Helvetica", 20, "bold")
         self.instructions_font = Font("Helvetica", 20, None)
+        self.workout_plan_type_font = Font("Helvetica", 13, None)
         
         self.title_label = Label(self,"This is your workout plan:",self.title_font,x=350,y=5)
         self.instructions_label = Label(self,"You can use this workout split, and adjust it to your own schedule.\nIt is recommended to have a rest day between each cycle,\nor at least one rest day each week to prevent injury.\nMake sure to listen to your body and take additional\nrest days if overly sore or fatigued.",self.instructions_font,x=230,y=410)
@@ -75,6 +76,7 @@ class window(ctk.CTk):
         self.legs_ex_4 = Label(self,"",self.exercise_font,x=700,y=250)
         self.legs_ex_5 = Label(self,"",self.exercise_font,x=700,y=300)
         self.legs_ex_6 = Label(self,"",self.exercise_font,x=700,y=350)
+        self.workout_plan_type_label = Label(self,"",self.workout_plan_type_font,x=800,y=10)
         #call method when window runs
         self.collect_info()
 
@@ -86,6 +88,10 @@ class window(ctk.CTk):
         cur = conn.cursor()
         cur.execute("SELECT * FROM workout_plan_details WHERE id=?", (plan_key))
         self.workout_plan = cur.fetchone()
+        cur.execute("SELECT * FROM user_personal_info WHERE id=?", (plan_key))
+        personal_info = cur.fetchone()
+        conn.close()
+        self.workout_plan_type = personal_info[6]
         #call method
         self.update_widgets()
 
@@ -154,6 +160,24 @@ class window(ctk.CTk):
             self.push_ex_6.configure(text=f"6. {push_exercise_6}")
             self.pull_ex_6.configure(text=f"6. {pull_exercise_6}")
             self.legs_ex_6.configure(text=f"6. {legs_exercise_6}")
+
+        if self.workout_plan_type == "Balanced":
+            self.workout_plan_type_label.configure(text="This is a balanced workout plan")
+        elif self.workout_plan_type == "Focus on legs":
+            self.workout_plan_type_label.configure(text="This is a workout plan with\nadded focus towards legs")
+        elif self.workout_plan_type == "Focus on back":
+            self.workout_plan_type_label.configure(text="This is a workout plan with\nadded focus towards back")
+        elif self.workout_plan_type == "Focus on biceps":
+            self.workout_plan_type_label.configure(text="This is a workout plan with\nadded focus towards biceps")
+        elif self.workout_plan_type == "Focus on triceps":
+            self.workout_plan_type_label.configure(text="This is a workout plan with\nadded focus towards triceps")
+        elif self.workout_plan_type == "Focus on shoulders":
+            self.workout_plan_type_label.configure(text="This is a workout plan with\nadded focus towards shoulders")
+        elif self.workout_plan_type == "Focus on chest":
+            self.workout_plan_type_label.configure(text="This is a workout plan with\nadded focus towards chest")
+        elif self.workout_plan_type == "Focus on cardio":
+            self.workout_plan_type_label.configure(text="This is a workout plan with\nadded focus towards cardio")
+
 
     #method to go to manage_fitness_plans page
     def manage_fitness_plans(self):
