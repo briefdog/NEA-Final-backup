@@ -58,7 +58,10 @@ class window(ctk.CTk):
         self.cm = StringVar()
         self.mm = StringVar()
 
-        #method called when user wants to close the window
+        #method called when user wants to close the window, so script gets fully terminated,
+        #incase the user presses the close window button in the top right corner,
+        #and the graph has already been created and placed at least once
+        #(More explanation at the close_everything method)
         self.protocol("WM_DELETE_WINDOW", self.close_everything)
 
         #create font
@@ -94,7 +97,7 @@ class window(ctk.CTk):
         self.bmigraph_label = Label(self, "When BMI is obtained, \na graph showing your \n data will appear\non the right→\n\nRemember, BMI does not\ntake muscle mass into account\nso muscular athletes may\nbe classed as overweight", x=20, y=150, font=self.bmi_label_font)
         self.product_code_scanner = Button(self, "Product code scanner", self.product_scanner, x=160, y=20)
         self.manage_fitness_plans_button = Button(self, "Manage fitness plans", self.manage_fitness_plans, x=160, y=50)
-        #button to close app
+        self.change_details_button = Button(self, "Change account\ndetails", self.change_account_details, x=750, y=20)
         self.close_app = Button(self, "Close app", self.close_app, x=160, y=80)
 
     #log out
@@ -129,6 +132,14 @@ class window(ctk.CTk):
         script_path = os.path.join("Scripts", "manage_fitness_plans.py")
         subprocess.run(["python", script_path])
         self.close_everything()
+
+    #go to "change_details" page
+    def change_account_details(self):
+        msg_box = messagebox.askquestion(title = "Change account details", message = "Are you sure you want to change your details? \nIf you change your mind, you will have to log in again.")
+        if msg_box == "yes":
+            script_path = os.path.join("Scripts", "change_details.py")
+            call(["python",script_path])
+            self.close_everything()
    
     #information for BMI calculator about ethnicity groups and BMI ranges is used from https://www.nhs.uk/live-well/healthy-weight/bmi-calculator/
     #when "Calculate"   button is pressed, check the value switches to see what units the user wants to use,
@@ -216,10 +227,10 @@ class window(ctk.CTk):
         #call function to display graph based on user's result for data visualisation
         self.display_bmi_graph(bmi)
 
-    #this website was used to find the horizontal graph from matplotlib: https://matplotlib.org/stable/gallery/lines_bars_and_markers/barh.html#sphx-glr-gallery-lines-bars-and-markers-barh-py
+    #this website was used to find the horizontal bar graph from matplotlib: https://matplotlib.org/stable/gallery/lines_bars_and_markers/barh.html#sphx-glr-gallery-lines-bars-and-markers-barh-py
     #these videos were used to learn how to use matplotlib: https://www.youtube.com/watch?v=2JjQIh-sgHU&t=9s
     #https://www.youtube.com/watch?v=8exB6Ly3nx0
-    #create a graph Based on the user's BMI
+    #create a horizontal bar graph Based on the user's BMI
     def display_bmi_graph(self,bmi):
         selected_value = self.ethnicity_options.get()
         #onstruct graph by labelling axis, and by creating the bars (by choosing colours and width of bars)
@@ -285,6 +296,9 @@ class window(ctk.CTk):
         for widget in children:
             widget.destroy()
         self.quit()
+        #for some reason the script does not get fully terminated only if I close window or go to another page after the graph has been created and placed,
+        #so i would have to restart my IDE just to run the script again for testing
+        #I used sys.exit() to fully terminate the script and to solve this issue, I found it here: https://stackoverflow.com/questions/73663/how-do-i-terminate-a-script
         sys.exit()   
 
 #run window
