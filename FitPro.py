@@ -22,7 +22,7 @@ from tkinter import messagebox
 from tkinter import *
 from tkinter import font
 
-#I used https://www.youtube.com/watch?v=eaxPK9VIkFM to learn how to use classes with customtkinter
+#I used https://www.youtube.com/watch?v=eaxPK9VIkFM to learn how to use classes with customtkinter, and this documentation: https://github.com/TomSchimansky/CustomTkinter/wiki/CTk-(tkinter.Tk)
 #I did not understand superclasses so I used this video for understanding: https://www.youtube.com/watch?v=RSl87lqOXDE
 #I learned **kwargs (keywordarguments) from https://www.youtube.com/watch?v=GdSJAZDsCZA, to optimise my code with classes in customtkinter
 
@@ -48,11 +48,11 @@ class Button(ctk.CTkButton):
         self.place(**kwargs)
 
 #class to create window
-class window(ctk.CTk):
+class Window(ctk.CTk):
     def __init__(self):
         super().__init__()
         
-        #set title, window size and make it so the user cannot change the size 
+        #set title, window size and make it so the user cannot change the size of window
         self.title("FitPro")
         self.geometry("790x440")
         self.resizable(False, False)
@@ -83,123 +83,134 @@ class window(ctk.CTk):
         self.login_button = Button(self, "Login", self.login, x=170, y=210)
         self.delete_button = Button(self, "Delete", self.delete_accountbutton, x=170, y=305)
         self.deleteaccount_label = Label(self, "Delete Account?", x=170, y=265, font=self.header_font)
-        self.database_label = Label(self, "(Make sure that the database is installed\nor else the app will not work)", x=150, y=360, font=self.small_font)
-        self.createdatabase_button = Button(self, "Create database", self.create_database, x=170, y=390)
         self.register_label = Label(self, "Register", x=590, y=50, font=self.title_font)
         self.newusername_label = Label(self, "New Username", x=450, y=100, font=self.header_font)
         self.newusername_entry = Entry(self, "", self.username, x=590, y=100)
         self.newpassword_entry = Entry(self, "*", self.password, x=590, y=160)
         self.newpassword_label = Label(self, "New Password", x=450, y=160, font=self.header_font)
-        self.register_button = Button(self, "Register", self.registerinfo, x=590, y=270)
+        self.register_button = Button(self, "Register", self.getinfo_register, x=590, y=270)
         self.confirm_password_label = Label(self, "Confirm Password", x=410, y=220, font=self.header_font)
         self.confirm_password_entry = Entry(self, "*", self.confirm_password_input, x=590, y=220)
         self.credentialslengths_label = Label(self, "1. Password and username must be at least 5 characters long\n and under 15 characters in length", x=450, y=320, font=self.small_font)
         self.passwordrequirements_label = Label(self, "2. Password must have at least one capital letter\n and special character", x=450, y=360, font=self.small_font)
         self.notidentical_label = Label(self, "3. password and username must not be identical", x=450, y=390, font=self.small_font)
-        self.change_details_button = Button(self, "Change account\ndetails", self.change_account_details, x=10, y=10)
+        self.change_details_button = Button(self, "Change account\ndetails", self.change_account_details, x=170, y=370)
+        #create database when window starts running
+        self.create_database()
 
     #add username and hashed password to database if they match requirements
-    def registerinfo(self):
+    def getinfo_register(self):
         #get all values from entry boxes and get the lengths of the user's inputs
-        username_info = self.username.get()
-        password_info = self.password.get()
-        confirm_password = self.confirm_password_input.get()
-        usernamelength = len(username_info)
-        passwordlength = len(password_info)
-        #check if new username and new password entries are empty, and if database exists
-        if os.path.isfile("information.db"):  
-            if username_info != "":
-                if password_info != "":
-                    #checks if new username and new password is shorter than 15 characters
-                    if usernamelength < 15:
-                        if passwordlength < 15:   
-                            #checks if new username and new password are identical
-                            if username_info != password_info:
-                                #checks if new username and new password is at least 5 characters
-                                if usernamelength >= 5:
-                                    if passwordlength >= 5:
-                                        #automatically makes new username lowercase for better accessibility
-                                        username_info = username_info.lower()
-                                        #hashes new password for security
-                                        h = hashlib.sha256()
-                                        h.update(password_info.encode("utf-8"))
-                                        #exception handling used so users cannot make multiple accounts with the same username
-                                        try:
-                                            hashed_password = h.hexdigest()
-                                            #check if there is at least one capital letter and special character in new password, the "\" allows the character after it to be accepted as a character
-                                            if (re.search(r'[\\!@#$%^&*()_\-+={}[\]|\/:;"\'<>,.]', password_info)) and (re.search(r'[A-Z]', password_info)):
-                                                #check if new password is identical to confirm pasword
-                                                if password_info == confirm_password:
-                                                    if os.path.isfile("information.db"):
-                                                        #if all checks, are passed, new username and hashed new password will get added to the database, and user will login automatically
-                                                        conn = sqlite3.connect("information.db")
-                                                        cur = conn.cursor()
-                                                        cur.execute("INSERT INTO users (username, password) VALUES (?,?)", (username_info, hashed_password))
-                                                        conn.commit()
-                                                        cur.execute("SELECT id FROM users WHERE username=?", (username_info,))
-                                                        #get primary key value so foreign key can be used in database
-                                                        primary_key = cur.fetchone()
-                                                        conn.close()
-                                                        #write the primary key value to text file so it can be fetched from the text file as a foreign key
-                                                        #get folder path all the way to current folder
-                                                        current_folder = os.path.dirname(__file__)
-                                                        #add subfolder to the folder path
-                                                        scripts_folder_path = os.path.join(current_folder, "Scripts")
-                                                        #then join path with file needed
-                                                        file_path = os.path.join(scripts_folder_path, "user_account_key.txt")
-                                                        #write the user's account key to text file for access to information, by using the folder path created
-                                                        with open(file_path,"w") as file:
-                                                                file.write(str(primary_key))
-                                                        messagebox.showinfo(title="Success", message="Account has been created")
-                                                        self.enter()
-                                                    else:
-                                                        messagebox.showerror(title = "Error",message="Database does not exist")
-                                                #an error message will pop up if any of the requirements are not satisfied
-                                                else:
-                                                    messagebox.showerror(title="error",message="Passwords must be identical")
-                                                    self.newpassword_entry.delete(0, END)
-                                                    self.confirm_password_entry.delete(0,END)
-                                            else:
-                                                messagebox.showerror(title="Error", message="Password must contain at least one capital letter and at least one special character")
-                                                self.newpassword_entry.delete(0, END)
-                                                self.confirm_password_entry.delete(0,END)
-                                        except sqlite3.IntegrityError:
-                                            messagebox.showerror(title="Error", message="User already exists")
-                                            self.newpassword_entry.delete(0, END)
-                                            self.confirm_password_entry.delete(0,END)
-                                    else:
-                                        messagebox.showerror(title="Error",message="Password must be at least 5 characters long")
-                                        self.newpassword_entry.delete(0, END)
-                                        self.confirm_password_entry.delete(0,END)
-                                else:
-                                    messagebox.showerror(title="Error", message="Username must be at least 5 characters long")
-                                    self.newpassword_entry.delete(0, END)
-                                    self.confirm_password_entry.delete(0,END)
+        self.username_info = self.username.get()
+        self.password_info = self.password.get()
+        self.confirm_password = self.confirm_password_input.get()
+        self.usernamelength = len(self.username_info)
+        self.passwordlength = len(self.password_info)
+        #go to next check
+        self.check_lengths()
+
+    def check_lengths(self):
+        #checks if inputs are empty or not
+        if self.username_info != "":
+            if self.password_info != "":
+                #checks if new username and new password is too long
+                if self.usernamelength < 15:
+                    if self.passwordlength < 15:
+                        #checks if username and password is too short
+                        if self.usernamelength >= 5:
+                            if self.passwordlength >= 5:
+                                #go to next check
+                                self.check_identical()
+                            #error message will appear if any requirements are not met
                             else:
-                                messagebox.showerror(title="Error", message="Username and password cannot be identical")
+                                messagebox.showerror(title="Error",message="Password must be at least 5 characters long")
                                 self.newpassword_entry.delete(0, END)
                                 self.confirm_password_entry.delete(0,END)
                         else:
-                            messagebox.showerror("error", message="Password is too long")
+                            messagebox.showerror(title="Error", message="Username must be at least 5 characters long")
                             self.newpassword_entry.delete(0, END)
                             self.confirm_password_entry.delete(0,END)
                     else:
-                        messagebox.showerror("error", message="Username is too long") 
+                        messagebox.showerror("error", message="Password is too long")
                         self.newpassword_entry.delete(0, END)
-                        self.confirm_password_entry.delete(0,END) 
+                        self.confirm_password_entry.delete(0,END)
                 else:
-                    messagebox.showerror(title="Error", message="Password cannot be empty")
+                    messagebox.showerror("error", message="Username is too long") 
+                    self.newusername_entry.delete(0, END)
                     self.newpassword_entry.delete(0, END)
-                    self.confirm_password_entry.delete(0,END)  
+                    self.confirm_password_entry.delete(0,END) 
             else:
-                messagebox.showerror(title="Error", message="Username cannot be empty") 
+                messagebox.showerror(title="Error", message="Password cannot be empty")
                 self.newpassword_entry.delete(0, END)
-                self.confirm_password_entry.delete(0,END)             
+                self.confirm_password_entry.delete(0,END)  
         else:
-            messagebox.showerror(title = "Error",message="Database does not exist")
+            messagebox.showerror(title="Error", message="Username cannot be empty") 
+            self.newpassword_entry.delete(0, END)
+            self.confirm_password_entry.delete(0,END)                   
+
+    def check_identical(self):
+        #check if username and password are identical or not
+        if self.username_info != self.password_info:
+            #check if confirm password and new password match
+            if self.password_info == self.confirm_password:
+                #go to next check
+                self.special_or_capital()
+            #error message will appear if any requirements are not met
+            else:
+                messagebox.showerror(title="error",message="Passwords must be identical")
+                self.newpassword_entry.delete(0, END)
+                self.confirm_password_entry.delete(0,END)
+        else:
+            messagebox.showerror(title="Error", message="Username and password cannot be identical")
             self.newpassword_entry.delete(0, END)
             self.confirm_password_entry.delete(0,END)
         
+    def special_or_capital(self):
+        #check if there is at least one capital letter and special character in new password, 
+        #the "\" allows the character after it to be accepted as a character
+        if (re.search(r'[\\!@#$%()?^&*()_\-+={}[\]|\/:;"\'<>,.]', self.password_info)) and (re.search(r'[A-Z]', self.password_info)):
+            self.register_info()
+        #error message will appear if any requirements are not met
+        else:
+            messagebox.showerror(title="Error", message="Password must contain at least one capital letter and at least one special character")
+            self.newpassword_entry.delete(0, END)
+            self.confirm_password_entry.delete(0,END)
+
+    def register_info(self):
+        #automatically makes new username lowercase for better accessibility
+        username_info = self.username_info.lower()
+        #hashes new password for security
+        h = hashlib.sha256()
+        h.update(self.password_info.encode("utf-8"))
+        #exception handling used so users cannot make multiple accounts with the same username
+        try:
+            hashed_password = h.hexdigest()
+            #new username and hashed new password will get added to the database, and user will login automatically
+            conn = sqlite3.connect("information.db")
+            cur = conn.cursor()
+            cur.execute("INSERT INTO users (username, password) VALUES (?,?)", (username_info, hashed_password))
+            conn.commit()
+            cur.execute("SELECT id FROM users WHERE username=?", (username_info,))
+            #get primary key value so foreign key can be used in database
+            primary_key = cur.fetchone()
+            conn.close()
+            #write the primary key value to text file so it can be fetched from the text file as a foreign key
+            #get folder path all the way to current folder
+            current_folder = os.path.dirname(__file__)
+            #add subfolder to the folder path
+            scripts_folder_path = os.path.join(current_folder, "Scripts")
+            #then join path with file needed
+            file_path = os.path.join(scripts_folder_path, "user_account_key.txt")
+            #write the user's account key to text file for access to information, by using the folder path created
+            with open(file_path,"w") as file:
+                    file.write(str(primary_key))
+            messagebox.showinfo(title="Success", message="Account has been created")
+            self.enter()
+        #if user with same username already exists in database, error message will appear
+        except sqlite3.IntegrityError:
+            messagebox.showerror(title="Error", message="User already exists")
+            self.newpassword_entry.delete(0, END)
+            self.confirm_password_entry.delete(0,END)
 
     #goes to homepage if credentials are correct
     def login_correct(self):
@@ -269,12 +280,13 @@ class window(ctk.CTk):
     #create database for user, so app can be used                                  
     def create_database(self):
         script_path = os.path.join("Scripts", "create_database.py")
+        #check if database already exists
         if os.path.isfile("information.db"):
-            messagebox.showerror(title = "Error", message = "Database already exists")
+            #if database already exists, nothing will happen
+            pass
         else:
             try:
                 subprocess.run(["python", script_path])
-                messagebox.showinfo(title = "Success", message = "Database created successfully")
             except Exception as e:
                 messagebox.showerror(title = "Error",message =  f"Error creating the database: {str(e)}")  
 
@@ -287,5 +299,5 @@ class window(ctk.CTk):
 
 #run window
 if __name__ == "__main__":
-    app = window()
+    app = Window()
     app.mainloop()
