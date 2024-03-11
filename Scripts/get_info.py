@@ -14,10 +14,12 @@ class CheckBox(ctk.CTkCheckBox):
         super().__init__(master, text=text,variable=variable,onvalue=onvalue,offvalue=offvalue)
         self.place(**kwargs)
 
+#class to create font
 class Font(ctk.CTkFont):
     def __init__(self, family, size, weight):
         super().__init__(family=family, size=size, weight=weight)
 
+#classes to create widgets
 class ComboBox(ctk.CTkComboBox):
     def __init__(self,master,values, **kwargs):
         super().__init__(master,values=values)
@@ -38,14 +40,15 @@ class Button(ctk.CTkButton):
         super().__init__(master, text=text, command=command)
         self.place(**kwargs)
 
+#class to create window
 class window(ctk.CTk):
     def __init__(self):
         super().__init__()
-
+        #create window
         self.title("FitPro")
         self.geometry("720x710")
         self.resizable(False, False)
-        
+        #create fonts
         self.title_font = Font("Helvetica", 30, "bold")
         self.question_font = Font("Helvetica", 18,"bold")
         self.explanation_font = Font("Helvetica",18,"bold")
@@ -93,7 +96,7 @@ class window(ctk.CTk):
         self.question3 = Label(self,"3. How much physical activity do you usually do in a week?",font=self.question_font,x=10,y=230)
         self.question4 = Label(self,"4. What type of workout plan do you want?",font=self.question_font,x=10,y=300)
         self.question5 = Label(self,"5. Do you have access to the gym?",font=self.question_font,x=10,y=360)
-        self.question6 = Label(self,"(If answer to question 5 was yes) \n6. Tick the boxes of the equipment that you have access to:",font=self.question_font,x=10,y=500)
+        self.question6 = Label(self,"(If answer to question 5 was yes) \n6. Tick the boxes of the equipment that you have access to:",font=self.question_font,x=10,y=490)
         self.submit_button = Button(self,"Submit",self.get_info,x=250,y=665)
         self.q1_entry = Entry(self,"",self.q1,x=50,y=120)
         self.q2_entry = Entry(self,"",self.q2,x=50,y=190)
@@ -124,7 +127,6 @@ class window(ctk.CTk):
         self.lateralpulldown_machine_checkbox = CheckBox(self, "Lateral pulldown\nmachine", self.lateralpulldown_machine_box, True,False,x=580,y=645)
         self.select_all_equipment_button = Button(self,"Select all\nequipment", self.select_all_equipment,x=250,y=435)
 
-            
     def select_all_equipment(self):
         #check if all equipment checkboxes are already checked
         if (self.dumbells_box.get() and self.pullupbar_box.get() and self.barbell_box.get() and
@@ -181,9 +183,7 @@ class window(ctk.CTk):
     def get_info(self):
         #collect user primary key
         with open("Scripts/user_account_key.txt","r") as f:
-                line = f.readline()
-                parts = line.split(',') 
-                self.number = parts[0].strip('(')
+                self.number = f.readline()
         #This will check if the user has reached the maximum number of plans
         conn = sqlite3.connect("information.db")
         cur = conn.cursor()
@@ -236,11 +236,11 @@ class window(ctk.CTk):
                                 self.q2_entry.delete(0,END)
                         #error message will appear if requirements are not met
                         else:
-                            messagebox.showerror(title = "Error", message = "Only values in the comboboxes must be selected")
+                            messagebox.showerror(title = "Error", message = "Only values in the combo boxes must be selected")
                     else:
-                        messagebox.showerror(title = "Error", message = "Only values in the comboboxes must be selected")
+                        messagebox.showerror(title = "Error", message = "Only values in the combo boxes must be selected")
                 else:
-                    messagebox.showerror(title = "Error", message = "Only values in the comboboxes must be selected")
+                    messagebox.showerror(title = "Error", message = "Only values in the combo boxes must be selected")
 
             else:
                 messagebox.showerror(title="Error", message="Weight or height cannot be empty")
