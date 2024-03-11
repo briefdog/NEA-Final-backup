@@ -19,7 +19,7 @@ from subprocess import call
 class Font(ctk.CTkFont):
     def __init__(self, family, size, weight):
         super().__init__(family=family, size=size, weight=weight)
-
+#classes to create widgets
 class Entry(ctk.CTkEntry):
     def __init__(self, master, show, textvariable, **kwargs):             
         super().__init__(master, show=show , textvariable=textvariable)
@@ -34,22 +34,23 @@ class Button(ctk.CTkButton):
     def __init__(self, master, text, command, **kwargs):
         super().__init__(master, text=text, command=command)
         self.place(**kwargs)
-
+        
+#class to create window
 class window(ctk.CTk):
     def __init__(self):
         super().__init__()
-
+        #create window
         self.title("FitPro")
         self.geometry("500x300")
         self.resizable(False, False)
         self.back_button = Button(self, "Go back to homepage", self.goback, x=10, y=10)
         self.create_fitness_plan_button = Button(self, "Create fitness plan?", self.create_fitness_plan,x=10,y=40.5)
-
+        #create font
         self.title_font = Font("Helvetica", 20, "bold")
         self.header_font = Font("Helvetica", 12, "bold")
-
+        #get entry variable
         self.deleteplan_var = StringVar()
-
+        #create widgets
         self.selectplan_label = Label(self,"Select a plan to open:",self.title_font,x=200,y=15)
         self.deleteplan_label = Label(self,"Enter name of\n plan to delete:",self.header_font,x=45,y=180)
         self.plan1_button = Button(self, "Empty plan", self.display_plan_1, x=20, y=100)
@@ -63,9 +64,7 @@ class window(ctk.CTk):
     #method will check if plan 1 exists then go to display_plan to display it
     def display_plan_1(self):
         with open("Scripts/user_account_key.txt","r") as f:
-            line = f.readline()
-            parts = line.split(',') 
-            key = parts[0].strip('(')  
+            key = f.readline() 
 
         conn = sqlite3.connect("information.db")
         cur = conn.cursor()
@@ -89,9 +88,7 @@ class window(ctk.CTk):
     #method will check if plan 2 exists then go to display_plan to display it
     def display_plan_2(self):
         with open("Scripts/user_account_key.txt","r") as f:
-            line = f.readline()
-            parts = line.split(',') 
-            key = parts[0].strip('(')  
+            key = f.readline()
 
         conn = sqlite3.connect("information.db")
         cur = conn.cursor()
@@ -115,9 +112,7 @@ class window(ctk.CTk):
     #method will check if plan 3 exists then go to display_plan to display it
     def display_plan_3(self):
         with open("Scripts/user_account_key.txt","r") as f:
-            line = f.readline()
-            parts = line.split(',') 
-            key = parts[0].strip('(')  
+            key = f.readline()
 
         conn = sqlite3.connect("information.db")
         cur = conn.cursor()
@@ -153,7 +148,7 @@ class window(ctk.CTk):
                 conn.close()
                 self.update_button_text_after_delete()
             else:
-                messagebox.showerror(title = "Error", message = "Plan does not exist")
+                messagebox.showerror(title = "Error", message = "Plan does not exist (check uppercase/lowercase)")
         else:
             messagebox.showerror(title = "Error", message = "Entry box must not be empty")
         self.deleteplan_entry.delete(0,END)
