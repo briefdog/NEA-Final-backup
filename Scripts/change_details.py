@@ -98,6 +98,7 @@ class window(ctk.CTk):
             #checks length of new password
             if self.new_password_value_length < 15:
                 if self.new_password_value_length >= 5:
+                    #call next method
                     self.check_identical_change_password()
                 #an error message will pop up if any of the requirements are not satisfied
                 else:
@@ -131,11 +132,11 @@ class window(ctk.CTk):
                 self.check_details_match_change_password()
             #an error message will pop up if any of the requirements are not satisfied
             else:
-                messagebox.showerror(title="Error", message="Password must contain at least one capital letter")
+                messagebox.showerror(title="Error", message="New password must contain at least one capital letter")
                 self.new_password_value_entry.delete(0,END)
                 self.confirm_new_password_value_entry.delete(0,END)  
         else:
-            messagebox.showerror(title="Error", message="Password must contain at least one special character")
+            messagebox.showerror(title="Error", message="New password must contain at least one special character")
             self.new_password_value_entry.delete(0,END)
             self.confirm_new_password_value_entry.delete(0,END)  
     
@@ -178,8 +179,8 @@ class window(ctk.CTk):
             conn.commit()
             conn.close()
             messagebox.showinfo(title = "Success", message = "Password has been changed successfully")
-            self.current_username_value_entry2.delete(0,END)
-            self.current_password_value_entry2.delete(0,END)
+            self.current_username_value_entry1.delete(0,END)
+            self.current_password_value_entry1.delete(0,END)
             self.new_password_value_entry.delete(0,END)
             self.confirm_new_password_value_entry.delete(0,END)
         #an error message will pop up if the requirements are not satisfied 
@@ -207,6 +208,7 @@ class window(ctk.CTk):
         if self.current_username_value1 and self.current_password_value1 and self.new_username_value and self.confirm_new_username_value != "":
             #checks if current username matches confirm new username
             if self.new_username_value == self.confirm_new_username_value:
+                #call next method
                 self.change_username()
             #an error message will pop up if any of the requirements are not satisfied
             else:
@@ -217,7 +219,7 @@ class window(ctk.CTk):
             messagebox.showerror(title= "Error",message = "None of the entry boxes should be empty")
             self.new_username_value_entry.delete(0,END)
             self.confirm_new_username_value_entry.delete(0,END)
-
+            
     def change_username(self):
         conn = sqlite3.connect("information.db")
         cur = conn.cursor()
@@ -228,14 +230,14 @@ class window(ctk.CTk):
         if user is not None:
             #checks length of new username
             if self.new_username_value_length < 15:
-                if self.new_username_value_length >= 5:
-                    correct_password = user[2]
-                    #hash current password entry so that it can be compared to the hashed password in the database
-                    h = hashlib.sha256()
-                    h.update(self.current_password_value1.encode("utf-8"))
-                    hashed_current_password = h.hexdigest()
-                    #checks if current password matches with password in database
-                    if hashed_current_password == correct_password:
+                correct_password = user[2]
+                #hash current password entry so that it can be compared to the hashed password in the database
+                h = hashlib.sha256()
+                h.update(self.current_password_value1.encode("utf-8"))
+                hashed_current_password = h.hexdigest()
+                #checks if current password matches with password in database
+                if hashed_current_password == correct_password:
+                    try:
                         #checks if the username needs to be changed
                         if self.current_username_value1 != self.new_username_value:
                             conn = sqlite3.connect("information.db")
@@ -253,12 +255,15 @@ class window(ctk.CTk):
                             messagebox.showerror(title="Error", message="New username must not be identical to current username")
                             self.new_username_value_entry.delete(0,END)
                             self.confirm_new_username_value_entry.delete(0,END)
-                    else:
-                        messagebox.showerror(title="Error", message="Current password entered is incorrect")
+                    #checks if the username is already taken
+                    except sqlite3.IntegrityError:
+                        #close connection here so database does not lock out
+                        conn.close()
+                        messagebox.showerror(title="Error", message="User already exists")
                         self.new_username_value_entry.delete(0,END)
                         self.confirm_new_username_value_entry.delete(0,END)
                 else:
-                    messagebox.showerror(title = "Error", message = "New username must be at least 5 characters long")
+                    messagebox.showerror(title="Error", message="Current password entered is incorrect")
                     self.new_username_value_entry.delete(0,END)
                     self.confirm_new_username_value_entry.delete(0,END)
             else:
