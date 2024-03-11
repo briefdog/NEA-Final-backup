@@ -40,19 +40,20 @@ class Button(ctk.CTkButton):
 class window(ctk.CTk):
     def __init__(self):
         super().__init__()
-
+        #create window
         self.title("FitPro")
-        self.geometry("1000x600")
+        self.geometry("1000x550")
         self.resizable(False, False)
         self.manage_fitness_plans_button = Button(self, "Manage fitness\nplans", self.manage_fitness_plans, x=10, y=10)
         self.homepage_button = Button(self, "Return to\nhomepage", self.homepage, x=10, y=49)
-
+        self.graphs_button = self.homepage_button = Button(self, "Data visualisation", self.data_visualisation,x=10,y=88.5)
+        #create fonts
         self.title_font = Font("Helvetica", 30, None)
         self.day_font = Font("Helvetica", 30, "bold")
         self.exercise_font = Font("Helvetica", 20, "bold")
         self.instructions_font = Font("Helvetica", 20, None)
-        self.workout_plan_type_font = Font("Helvetica", 13, None)
-        
+        self.small_header = Font("Helvetica", 13, None)
+        #create and place widgets
         self.title_label = Label(self,"This is your workout plan:",self.title_font,x=350,y=5)
         self.instructions_label = Label(self,"You can use this workout split, and adjust it to your own schedule.\nIt is recommended to have a rest day between each cycle,\nor at least one rest day each week to prevent injury.\nMake sure to listen to your body and take additional\nrest days if overly sore or fatigued.",self.instructions_font,x=230,y=410)
         self.pushday_label = Label(self,"Push day",self.day_font,x=200,y=50)
@@ -76,7 +77,7 @@ class window(ctk.CTk):
         self.legs_ex_4 = Label(self,"",self.exercise_font,x=700,y=250)
         self.legs_ex_5 = Label(self,"",self.exercise_font,x=700,y=300)
         self.legs_ex_6 = Label(self,"",self.exercise_font,x=700,y=350)
-        self.workout_plan_type_label = Label(self,"",self.workout_plan_type_font,x=800,y=10)
+        self.workout_plan_type_label = Label(self,"",self.small_header,x=800,y=10)
         #call method when window runs
         self.collect_info()
 
@@ -161,6 +162,7 @@ class window(ctk.CTk):
             self.pull_ex_6.configure(text=f"6. {pull_exercise_6}")
             self.legs_ex_6.configure(text=f"6. {legs_exercise_6}")
 
+        #change text for workout_plan_type_label which specifies what type of workout plan has been created for the user
         if self.workout_plan_type == "Balanced":
             self.workout_plan_type_label.configure(text="This is a balanced workout plan")
         elif self.workout_plan_type == "Focus on legs":
@@ -185,8 +187,15 @@ class window(ctk.CTk):
         subprocess.run(["python", script_path])
         self.close_everything()
 
+    #method to go back to homepage
     def homepage(self):
         script_path = os.path.join("Scripts", "homepage.py")
+        subprocess.run(["python", script_path])
+        self.close_everything()
+
+    #method to go to data visualisation page
+    def data_visualisation(self):
+        script_path = os.path.join("Scripts", "data_visualisation.py")
         subprocess.run(["python", script_path])
         self.close_everything()
 
