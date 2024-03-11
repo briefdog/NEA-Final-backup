@@ -75,7 +75,7 @@ class window(ctk.CTk):
         self.return_button = Button(self, "Log out", self.logout, x=20, y=20)
         self.homepage_label = Label(self, "Homepage", x=420, y=20, font=self.title_font)
         self.createplan_button = Button(self, "Create fitness plan?", self.create_plan, x=20, y=50)
-        self.bmi_label = Label(self, "Calculate your BMI here", x=350, y=430, font=self.bmi_label_font)
+        self.bmi_label = Label(self, "Calculate your BMI here:", x=350, y=430, font=self.bmi_label_font)
         self.weight_entry = Entry(self, "", self.weight, x=430, y=510)
         self.height_entry = Entry(self, "", self.height, x=430, y=470)
         self.weight_label = Label(self, "Weight:", x=350,y=510, font=self.header_font)
@@ -94,7 +94,7 @@ class window(ctk.CTk):
         self.ethnicity_label = Label(self, "What is your ethnicity?", x=700, y=430, font=self.header_font)
         self.ethnicityexplanation_label = Label(self, "(We ask this because \nBMI results can vary for \ndifferent ethnic groups)", x=700, y=540, font=self.ethnicityexplanation_font)
         self.delete_button = Button(self, "Delete Account", self.delete_acccountbutton, x=20, y=80)
-        self.bmigraph_label = Label(self, "When BMI is obtained, \na graph showing your \n data will appear\non the right→\n\nRemember, BMI does not\ntake muscle mass into account\nso muscular athletes may\nbe classed as overweight", x=20, y=150, font=self.bmi_label_font)
+        self.bmigraph_label = Label(self, "When BMI is obtained, \na graph showing your \n data will appear\non the right→\n\nNote that BMI does not\ntake muscle mass into account\nso muscular athletes may\nbe classed as overweight", x=20, y=150, font=self.bmi_label_font)
         self.product_code_scanner = Button(self, "Product code scanner", self.product_scanner, x=160, y=20)
         self.manage_fitness_plans_button = Button(self, "Manage fitness plans", self.manage_fitness_plans, x=160, y=50)
         self.change_details_button = Button(self, "Change account\ndetails", self.change_account_details, x=750, y=20)
@@ -111,7 +111,7 @@ class window(ctk.CTk):
     def delete_acccountbutton(self):
         msg_box = messagebox.askquestion(title = "Delete account", message = "Are you sure you want to delete your account? \nIf you change your mind, you will have to log in again.")
         if msg_box == "yes":
-            script_path = os.path.join("Scripts", "deleteaccount.py")
+            script_path = os.path.join("Scripts", "delete_account.py")
             subprocess.run(["python", script_path])
             self.close_everything()
 
@@ -142,6 +142,7 @@ class window(ctk.CTk):
             self.close_everything()
    
     #information for BMI calculator about ethnicity groups and BMI ranges is used from https://www.nhs.uk/live-well/healthy-weight/bmi-calculator/
+    #(NHS page may have been updated so all required information may have changed)
     #when "Calculate"   button is pressed, check the value switches to see what units the user wants to use,
     #and check if input is a number or if entries are not empty, or else an error message will pop up
     def calculate_bmi(self):
@@ -228,17 +229,17 @@ class window(ctk.CTk):
         self.display_bmi_graph(bmi)
 
     #this website was used to find the horizontal bar graph from matplotlib: https://matplotlib.org/stable/gallery/lines_bars_and_markers/barh.html#sphx-glr-gallery-lines-bars-and-markers-barh-py
-    #these videos were used to learn how to use matplotlib: https://www.youtube.com/watch?v=2JjQIh-sgHU&t=9s
+    #these videos were used to learn how to use matplotlib and how to integrate it into Tkinter: https://www.youtube.com/watch?v=2JjQIh-sgHU&t=9s
     #https://www.youtube.com/watch?v=8exB6Ly3nx0
     #create a horizontal bar graph Based on the user's BMI
     def display_bmi_graph(self,bmi):
         selected_value = self.ethnicity_options.get()
         #onstruct graph by labelling axis, and by creating the bars (by choosing colours and width of bars)
         categories = ["Your BMI", "Underweight", "Optimal\nweight", "Overweight", "Obese"]
-        borders = [bmi, 18.5, 21.7, 24.9, max(bmi + 5, 30)]
+        borders = [bmi, 18.5, 21.7, 24.9, 30]
         #adjust borders based on user's ethicity choice
         if selected_value not in ["White", "Prefer not to say"]:
-            borders = [bmi, 18.5, 20.75, 23, max(bmi + 5, 27.5)]
+            borders = [bmi, 18.5, 20.75, 23, 27.5]
         colours = ['skyblue', 'red', 'green', 'yellow', 'orange']
         plt.clf()
         fig, ax = plt.subplots(figsize=(8, 5))
@@ -252,8 +253,8 @@ class window(ctk.CTk):
         ax.grid(axis='x')
         #place graph on window
         canvas = FigureCanvasTkAgg(fig, master=self)
-        canvas_widget = canvas.get_tk_widget()
-        canvas_widget.place(x=540, y=125)
+        bmi_graph = canvas.get_tk_widget()
+        bmi_graph.place(x=540, y=125)
 
 
     #convert cm to m and display result
