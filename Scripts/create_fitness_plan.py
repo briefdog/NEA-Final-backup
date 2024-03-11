@@ -1,3 +1,7 @@
+#There is a lot of code in this script to handle all possible outcomes incase they happen,
+#but every time this code is run, (compared to all of the code) only a small amount will be run,
+#This is because of the many if statements and conditions in this script
+#I was able to write this code by re-using a lot of it and adjusting it
 from datetime import datetime
 import customtkinter as ctk
 from tkinter import messagebox
@@ -9,10 +13,11 @@ import sqlite3
 import subprocess
 from subprocess import call
 
+#class to create font
 class Font(ctk.CTkFont):
     def __init__(self, family, size, weight):
         super().__init__(family=family, size=size, weight=weight)
-
+#class to create widgets
 class Entry(ctk.CTkEntry):
     def __init__(self, master, show, textvariable, **kwargs):             
         super().__init__(master, show=show , textvariable=textvariable)
@@ -31,7 +36,7 @@ class Button(ctk.CTkButton):
 class window(ctk.CTk):
     def __init__(self):
         super().__init__()
-
+        #create window
         self.title("FitPro")
         self.geometry("500x300")
         self.resizable(False, False)
@@ -58,9 +63,7 @@ class window(ctk.CTk):
 
         #get user's account key
         with open("Scripts/user_account_key.txt","r") as f:
-                line = f.readline()
-                parts = line.split(',') 
-                self.account_key = parts[0].strip('(')
+                self.account_key = f.readline()
         current_day = datetime.now()
         current_date = current_day.date()
         plan_name = self.plan_name_var.get()
@@ -79,12 +82,13 @@ class window(ctk.CTk):
                     cur.execute("SELECT MAX(id) FROM plan_identification")
                     plan_key_tuple = cur.fetchone()
                     self.plan_key = plan_key_tuple[0]
-                    #add user's account key to plan identification
+                    #add user's account key and plan key to plan identification table
                     cur.execute("UPDATE plan_identification SET user_fk = ? WHERE id = ?", (self.account_key, self.plan_key))
                     #get most recent entry of information from one of the information tables
                     cur.execute("SELECT MAX(main_id) FROM user_personal_info")
                     information_id = cur.fetchone()
                     most_recent_entry = information_id[0]
+                    #add user's account key and plan key to user personal info and equipment access tables
                     cur.execute("UPDATE user_personal_info SET id = ? WHERE main_id = ?", (self.plan_key,most_recent_entry))
                     cur.execute("UPDATE equipment_access SET id = ? WHERE main_id = ?", (self.plan_key,most_recent_entry))
                     conn.commit()
@@ -97,8 +101,9 @@ class window(ctk.CTk):
                     self.get_info()
                 #use of unique constraint to prevent duplicate plan names
                 except sqlite3.IntegrityError:
+                    #close connection here so database does not lock out
+                    conn.close()
                     messagebox.showerror(title = "Error", message = "Plan name already exists in the database")
-                #database can get locked here sometimes
                 except sqlite3.OperationalError as e:
                     print(e)
             else:
@@ -175,7 +180,8 @@ class window(ctk.CTk):
             ("Preacher curls", "Pull", "biceps", (self.ez_bar and self.preacher_curl_bench)),
             ("Incline bicep\ncurls","Pull","biceps",(self.dumbells and self.bench)),
             ("Incline hammer\ncurls","Pull","biceps",(self.dumbells and self.bench)),
-            ("lateral raise", "Push", "shoulders", (self.dumbells or self.cables)),
+            ("Lateral raise", "Push", "shoulders", (self.dumbells or self.cables)),
+            ("Tricep press", "Push", "triceps", self.tricep_press_machine),
             ("Rear delts", "Push", "shoulders", (self.cables or self.pec_fly_machine)),
             ("Bicep curls", "Pull", "biceps", self.dumbells),
             ("Hammer curls", "Pull", "biceps", self.dumbells),
@@ -208,17 +214,17 @@ class window(ctk.CTk):
             ("Deadlift","Legs,Pull","back,legs",self.barbell),
             ("Bench press","Push","chest,shoulders,triceps",(self.barbell and self.bench)),
             ("Shoulder press","Push","shoulders,triceps,chest",self.shoulder_press_machine),
-            ("Laterall pull-down","Pull","biceps,shoulders",self.lateral_pulldown_machine),
+            ("Laterall pull-down","Pull","back,shoulder,biceps",self.lateral_pulldown_machine),
             ("Pec fly","Push","shoulders,triceps,biceps",self.pec_fly_machine),
             ("Rows","Pull","shoulders,back,biceps",(self.rowing_machine or self.cables)),
-            ("Leg-press","Legs","legs",(self.leg_press_machine)),
+            ("Leg press","Legs","legs",(self.leg_press_machine)),
             ("Bulgarian split squat","Legs","legs",(self.bench and self.dumbells)),
-            ("Australian pull ups\n(using table)", "Pull", "back,shoulders,biceps", None),
+            ("Pull ups\n(using fridge)", "Pull", "back,shoulders,biceps", None),
             ("Burpees","Legs,Push","chest,triceps,shoulders,legs",None),
             ("Lunges","Legs","legs",None),
             ("Push ups","Push","triceps,chest,shoulders",None),
             ("Inverted rows\n(using table)", "Pull", "back,shoulders,biceps", None),
-             ("Squats", "Legs", "legs", None)
+            ("Squats", "Legs", "legs", None)
         ]
 
         #list of tuples of cardio exercises
@@ -226,11 +232,12 @@ class window(ctk.CTk):
         #and second column is whether equipment is needed
         self.cardio_exercises = [
             ("Running on\ntreadmill", self.treadmill),
-            ("Skipping rope", self.skipping_rope),
             ("Biking", self.exercise_bike),
-            ("Stairs",self.stair_climber_machine),
+            ("Stairmaster",self.stair_climber_machine),
+            ("Skipping rope", self.skipping_rope),
             ("Crunches", None)
         ]
+        #call method to create plan
         self.create_plan_details()
 
     #This method will check what the user's weight goal is,
@@ -258,8 +265,8 @@ class window(ctk.CTk):
         if self.physical_activity == "low":
             #max_exercises_per_day is there for testing purposes as an indicator of how many exercises should be in each list
             max_exercises_per_day = 4
-            compound_exercises_per_day = 1
-            isolation_exercises_per_day = 2
+            compound_exercises_per_day = 2
+            isolation_exercises_per_day = 1
             cardio_exercises_per_day = 1
             
         elif self.physical_activity == "moderate":
@@ -286,9 +293,6 @@ class window(ctk.CTk):
                 self.push_day1.append(exercise[0])
                 #increment counter
                 compound_counter += 1
-                if compound_counter == compound_exercises_per_day:
-                    #break loop if counter reaches limit
-                    break
 
         compound_counter=0
         isolation_counter = 0
@@ -298,8 +302,6 @@ class window(ctk.CTk):
             if isolation_counter < isolation_exercises_per_day and "Push" in exercise[1] and (exercise[3] == 1 or exercise[3]==None):
                 self.push_day1.append(exercise[0])
                 isolation_counter += 1
-                if isolation_counter == isolation_exercises_per_day:
-                    break
 
         compound_counter=0
         isolation_counter = 0
@@ -309,8 +311,6 @@ class window(ctk.CTk):
             if cardio_counter < cardio_exercises_per_day and (exercise[1] == 1 or exercise[1]==None):
                 self.push_day1.append(exercise[0])
                 cardio_counter += 1
-                if cardio_counter == cardio_exercises_per_day:
-                    break
         
         compound_counter=0
         isolation_counter = 0
@@ -320,8 +320,6 @@ class window(ctk.CTk):
             if compound_counter < compound_exercises_per_day and "Pull" in exercise[1] and (exercise[3] == 1 or exercise[3]==None):
                 self.pull_day1.append(exercise[0])
                 compound_counter += 1
-                if compound_counter == compound_exercises_per_day:
-                    break
         
         compound_counter=0
         isolation_counter = 0
@@ -331,8 +329,6 @@ class window(ctk.CTk):
             if isolation_counter < isolation_exercises_per_day and "Pull" in exercise[1] and (exercise[3] == 1 or exercise[3]==None):
                 self.pull_day1.append(exercise[0])
                 isolation_counter += 1
-                if isolation_counter == isolation_exercises_per_day:
-                    break
 
         compound_counter=0
         isolation_counter = 0
@@ -342,8 +338,6 @@ class window(ctk.CTk):
             if cardio_counter < cardio_exercises_per_day and (exercise[1] == 1 or exercise[1]==None):
                 self.pull_day1.append(exercise[0])
                 cardio_counter += 1
-                if cardio_counter == cardio_exercises_per_day:
-                    break
         
         compound_counter=0
         isolation_counter = 0
@@ -353,8 +347,6 @@ class window(ctk.CTk):
             if compound_counter < compound_exercises_per_day and "Legs" in exercise[1] and (exercise[3] == 1 or exercise[3]==None):
                 self.legs_day1.append(exercise[0])
                 compound_counter += 1
-                if compound_counter == compound_exercises_per_day:
-                    break
 
         compound_counter=0
         isolation_counter = 0
@@ -364,8 +356,6 @@ class window(ctk.CTk):
             if isolation_counter < isolation_exercises_per_day and "Legs" in exercise[1] and (exercise[3] == 1 or exercise[3]==None):
                 self.legs_day1.append(exercise[0])
                 isolation_counter += 1
-                if isolation_counter == isolation_exercises_per_day:
-                    break
 
         compound_counter=0
         isolation_counter = 0
@@ -375,8 +365,6 @@ class window(ctk.CTk):
             if cardio_counter < cardio_exercises_per_day and (exercise[1] == 1 or exercise[1]==None):
                 self.legs_day1.append(exercise[0])
                 cardio_counter += 1
-                if cardio_counter == cardio_exercises_per_day:
-                    break
 
         #if user wants a balanced workout plan, the plan will stay the same as it is, but if the user wants focus on a specific muscle group,
         #an extra isolation exercise will get added into the other exercise which will target that muscle group
@@ -423,27 +411,27 @@ class window(ctk.CTk):
                     if "legs" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
                         legs_exercise = exercise[0]
                         y += 1
-                self.push_day1[3] = legs_exercise
+                self.push_day1[4] = legs_exercise
                 x = 1
                 y = 0
                 for exercise in self.lower_body_exercises:
                     if "legs" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and legs_exercise != exercise[0]:
                         legs_exercise = exercise[0]
                         y += 1
-                self.pull_day1[3] = legs_exercise
+                self.pull_day1[4] = legs_exercise
 
             elif self.workout_type == "Focus on back" and self.physical_activity == "low":
                 back_exercise = None
                 x = 1
                 y = 0
-                for exercise in self.upper_body_exercises:
+                for exercise in self.compound_exercises:
                     if "back" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
                         back_exercise = exercise[0]
                         y += 1
                 self.push_day1[2] = back_exercise
                 x = 1
                 y = 0
-                for exercise in self.upper_body_exercises:
+                for exercise in self.compound_body_exercises:
                     if "back" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and back_exercise != exercise[0]:
                         back_exercise = exercise[0]
                         y += 1
@@ -453,14 +441,14 @@ class window(ctk.CTk):
                 back_exercise = None
                 x = 1
                 y = 0
-                for exercise in self.upper_body_exercises:
+                for exercise in self.compound_exercises:
                     if "back" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
                         back_exercise = exercise[0]
                         y += 1
                 self.push_day1[3] = back_exercise
                 x = 1
                 y = 0
-                for exercise in self.upper_body_exercises:
+                for exercise in self.compound_body_exercises:
                     if "back" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and back_exercise != exercise[0]:
                         back_exercise = exercise[0]
                         y += 1
@@ -470,14 +458,14 @@ class window(ctk.CTk):
                 back_exercise = None
                 x = 1
                 y = 0
-                for exercise in self.upper_body_exercises:
+                for exercise in self.compound_exercises:
                     if "back" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
                         back_exercise = exercise[0]
                         y += 1
                 self.push_day1[4] = back_exercise
                 x = 1
                 y = 0
-                for exercise in self.upper_body_exercises:
+                for exercise in self.compound_body_exercises:
                     if "back" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and back_exercise != exercise[0]:
                         back_exercise = exercise[0]
                         y += 1
@@ -825,14 +813,14 @@ class window(ctk.CTk):
 
         if self.physical_activity == "low":
             max_exercises_per_day = 4
-            compound_exercises_per_day = 2
-            isolation_exercises_per_day = 1
+            compound_exercises_per_day = 1
+            isolation_exercises_per_day = 2
             cardio_exercises_per_day = 1
             
         elif self.physical_activity == "moderate":
             max_exercises_per_day = 5
-            compound_exercises_per_day = 2
-            isolation_exercises_per_day = 2
+            compound_exercises_per_day = 1
+            isolation_exercises_per_day = 3
             cardio_exercises_per_day = 1
 
         else:
@@ -849,8 +837,6 @@ class window(ctk.CTk):
             if compound_counter < compound_exercises_per_day and "Push" in exercise[1] and (exercise[3] == 1 or exercise[3]==None):
                 self.push_day2.append(exercise[0])
                 compound_counter += 1
-                if compound_counter == compound_exercises_per_day:
-                    break
 
         compound_counter=0
         isolation_counter = 0
@@ -860,8 +846,6 @@ class window(ctk.CTk):
             if isolation_counter < isolation_exercises_per_day and "Push" in exercise[1] and (exercise[3] == 1 or exercise[3]==None):
                 self.push_day2.append(exercise[0])
                 isolation_counter += 1
-                if isolation_counter == isolation_exercises_per_day:
-                    break
 
         compound_counter=0
         isolation_counter = 0
@@ -871,8 +855,6 @@ class window(ctk.CTk):
             if cardio_counter < cardio_exercises_per_day and (exercise[1] == 1 or exercise[1]==None):
                 self.push_day2.append(exercise[0])
                 cardio_counter += 1
-                if cardio_counter == cardio_exercises_per_day:
-                    break
         
         compound_counter=0
         isolation_counter = 0
@@ -882,8 +864,6 @@ class window(ctk.CTk):
             if compound_counter < compound_exercises_per_day and "Pull" in exercise[1] and (exercise[3] == 1 or exercise[3]==None):
                 self.pull_day2.append(exercise[0])
                 compound_counter += 1
-                if compound_counter == compound_exercises_per_day:
-                    break
 
         compound_counter=0
         isolation_counter = 0
@@ -893,8 +873,6 @@ class window(ctk.CTk):
             if isolation_counter < isolation_exercises_per_day and "Pull" in exercise[1] and (exercise[3] == 1 or exercise[3]==None):
                 self.pull_day2.append(exercise[0])
                 isolation_counter += 1
-                if isolation_counter == isolation_exercises_per_day:
-                    break
 
         compound_counter=0
         isolation_counter = 0
@@ -904,9 +882,7 @@ class window(ctk.CTk):
             if cardio_counter < cardio_exercises_per_day and (exercise[1] == 1 or exercise[1]==None):
                 self.pull_day2.append(exercise[0])
                 cardio_counter += 1
-                if cardio_counter == cardio_exercises_per_day:
-                    break
-        
+
         compound_counter=0
         isolation_counter = 0
         cardio_counter = 0
@@ -915,8 +891,6 @@ class window(ctk.CTk):
             if compound_counter < compound_exercises_per_day and "Legs" in exercise[1] and (exercise[3] == 1 or exercise[3]==None):
                 self.legs_day2.append(exercise[0])
                 compound_counter += 1
-                if compound_counter == compound_exercises_per_day:
-                    break
 
         compound_counter=0
         isolation_counter = 0
@@ -926,8 +900,6 @@ class window(ctk.CTk):
             if isolation_counter < isolation_exercises_per_day and "Legs" in exercise[1] and (exercise[3] == 1 or exercise[3]==None):
                 self.legs_day2.append(exercise[0])
                 isolation_counter += 1
-                if isolation_counter == isolation_exercises_per_day:
-                    break
 
         compound_counter=0
         isolation_counter = 0
@@ -937,8 +909,6 @@ class window(ctk.CTk):
             if cardio_counter < cardio_exercises_per_day and (exercise[1] == 1 or exercise[1]==None):
                 self.legs_day2.append(exercise[0])
                 cardio_counter += 1
-                if cardio_counter == cardio_exercises_per_day:
-                    break
 
         #if user wants a balanced workout plan, the plan will stay the same as it is, but if the user wants focus on a specific muscle group,
         #an extra isolation exercise will get added into the other exercise which will target that muscle group
@@ -954,7 +924,7 @@ class window(ctk.CTk):
                 self.push_day2[2] = legs_exercise
                 x = 1
                 y = 0
-                for exercise in self.lower_body_exercises:                                              #makes sure that different exercises get added
+                for exercise in self.lower_body_exercises:                           #makes sure that different exercises get added
                     if "legs" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and legs_exercise != exercise[0]:
                         legs_exercise = exercise[0]
                         y += 1
@@ -998,14 +968,14 @@ class window(ctk.CTk):
                 back_exercise = None
                 x = 1
                 y = 0
-                for exercise in self.upper_body_exercises:
+                for exercise in self.compound_exercises:
                     if "back" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
                         back_exercise = exercise[0]
                         y += 1
                 self.push_day2[2] = back_exercise
                 x = 1
                 y = 0
-                for exercise in self.upper_body_exercises:
+                for exercise in self.compound_body_exercises:
                     if "back" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and back_exercise != exercise[0]:
                         back_exercise = exercise[0]
                         y += 1
@@ -1015,14 +985,14 @@ class window(ctk.CTk):
                 back_exercise = None
                 x = 1
                 y = 0
-                for exercise in self.upper_body_exercises:
+                for exercise in self.compound_exercises:
                     if "back" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
                         back_exercise = exercise[0]
                         y += 1
                 self.push_day2[3] = back_exercise
                 x = 1
                 y = 0
-                for exercise in self.upper_body_exercises:
+                for exercise in self.compound_exercises:
                     if "back" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and back_exercise != exercise[0]:
                         back_exercise = exercise[0]
                         y += 1
@@ -1032,14 +1002,14 @@ class window(ctk.CTk):
                 back_exercise = None
                 x = 1
                 y = 0
-                for exercise in self.upper_body_exercises:
+                for exercise in self.compound_exercises:
                     if "back" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
                         back_exercise = exercise[0]
                         y += 1
                 self.push_day2[4] = back_exercise
                 x = 1
                 y = 0
-                for exercise in self.upper_body_exercises:
+                for exercise in self.compound_exercises:
                     if "back" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and back_exercise != exercise[0]:
                         back_exercise = exercise[0]
                         y += 1
@@ -1411,8 +1381,6 @@ class window(ctk.CTk):
             if compound_counter < compound_exercises_per_day and "Push" in exercise[1] and (exercise[3] == 1 or exercise[3]==None):
                 self.push_day3.append(exercise[0])
                 compound_counter += 1
-                if compound_counter == compound_exercises_per_day:
-                    break
 
         compound_counter=0
         isolation_counter = 0
@@ -1422,8 +1390,6 @@ class window(ctk.CTk):
             if isolation_counter < isolation_exercises_per_day and "Push" in exercise[1] and (exercise[3] == 1 or exercise[3]==None):
                 self.push_day3.append(exercise[0])
                 isolation_counter += 1
-                if isolation_counter == isolation_exercises_per_day:
-                    break
 
         compound_counter=0
         isolation_counter = 0
@@ -1433,8 +1399,6 @@ class window(ctk.CTk):
             if cardio_counter < cardio_exercises_per_day and (exercise[1] == 1 or exercise[1]==None):
                 self.push_day3.append(exercise[0])
                 cardio_counter += 1
-                if cardio_counter == cardio_exercises_per_day:
-                    break
 
         compound_counter=0
         isolation_counter = 0
@@ -1444,8 +1408,6 @@ class window(ctk.CTk):
             if compound_counter < compound_exercises_per_day and "Pull" in exercise[1] and (exercise[3] == 1 or exercise[3]==None):
                 self.pull_day3.append(exercise[0])
                 compound_counter += 1
-                if compound_counter == compound_exercises_per_day:
-                    break
 
         compound_counter=0
         isolation_counter = 0
@@ -1455,8 +1417,6 @@ class window(ctk.CTk):
             if isolation_counter < isolation_exercises_per_day and "Pull" in exercise[1] and (exercise[3] == 1 or exercise[3]==None):
                 self.pull_day3.append(exercise[0])
                 isolation_counter += 1
-                if isolation_counter == isolation_exercises_per_day:
-                    break
 
         compound_counter=0
         isolation_counter = 0
@@ -1466,8 +1426,6 @@ class window(ctk.CTk):
             if cardio_counter < cardio_exercises_per_day and (exercise[1] == 1 or exercise[1]==None):
                 self.pull_day3.append(exercise[0])
                 cardio_counter += 1
-                if cardio_counter == cardio_exercises_per_day:
-                    break
 
         compound_counter=0
         isolation_counter = 0
@@ -1477,8 +1435,6 @@ class window(ctk.CTk):
             if compound_counter < compound_exercises_per_day and "Legs" in exercise[1] and (exercise[3] == 1 or exercise[3]==None):
                 self.legs_day3.append(exercise[0])
                 compound_counter += 1
-                if compound_counter == compound_exercises_per_day:
-                    break
 
         compound_counter=0
         isolation_counter = 0
@@ -1488,8 +1444,6 @@ class window(ctk.CTk):
             if isolation_counter < isolation_exercises_per_day and "Legs" in exercise[1] and (exercise[3] == 1 or exercise[3]==None):
                 self.legs_day3.append(exercise[0])
                 isolation_counter += 1
-                if isolation_counter == isolation_exercises_per_day:
-                    break
 
         compound_counter=0
         isolation_counter = 0
@@ -1499,8 +1453,6 @@ class window(ctk.CTk):
             if cardio_counter < cardio_exercises_per_day and (exercise[1] == 1 or exercise[1]==None):
                 self.legs_day3.append(exercise[0])
                 cardio_counter += 1
-                if cardio_counter == cardio_exercises_per_day:
-                    break
 
         #if user wants a balanced workout plan, the plan will stay the same as it is, but if the user wants focus on a specific muscle group,
         #an extra isolation exercise will get added into the other exercise which will target that muscle group
@@ -1508,6 +1460,7 @@ class window(ctk.CTk):
         if self.workout_type != "Balanced":
             if self.workout_type == "Focus on legs" and self.physical_activity == "low":
                 legs_exercise = None
+                # x and y are stopping conditions for every for loop
                 x = 1
                 y = 0
                 for exercise in self.lower_body_exercises:
@@ -1561,14 +1514,14 @@ class window(ctk.CTk):
                 back_exercise = None
                 x = 1
                 y = 0
-                for exercise in self.upper_body_exercises:
+                for exercise in self.compound_exercises:
                     if "back" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
                         back_exercise = exercise[0]
                         y += 1
                 self.push_day3[2] = back_exercise
                 x = 1
                 y = 0
-                for exercise in self.upper_body_exercises:
+                for exercise in self.compound_exercises:
                     if "back" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and back_exercise != exercise[0]:
                         back_exercise = exercise[0]
                         y += 1
@@ -1578,14 +1531,14 @@ class window(ctk.CTk):
                 back_exercise = None
                 x = 1
                 y = 0
-                for exercise in self.upper_body_exercises:
+                for exercise in self.compound_exercises:
                     if "back" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
                         back_exercise = exercise[0]
                         y += 1
                 self.push_day3[3] = back_exercise
                 x = 1
                 y = 0
-                for exercise in self.upper_body_exercises:
+                for exercise in self.compound_exercises:
                     if "back" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and back_exercise != exercise[0]:
                         back_exercise = exercise[0]
                         y += 1
@@ -1595,14 +1548,14 @@ class window(ctk.CTk):
                 back_exercise = None
                 x = 1
                 y = 0
-                for exercise in self.upper_body_exercises:
+                for exercise in self.compound_exercises:
                     if "back" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x:
                         back_exercise = exercise[0]
                         y += 1
                 self.push_day3[4] = back_exercise
                 x = 1
                 y = 0
-                for exercise in self.upper_body_exercises:
+                for exercise in self.compound_exercises:
                     if "back" in exercise[2] and (exercise[3] == 1 or exercise[3]==None) and y < x and back_exercise != exercise[0]:
                         back_exercise = exercise[0]
                         y += 1
@@ -2191,7 +2144,6 @@ class window(ctk.CTk):
 
     #method will write the user plan key to the text file, then go to display_plan
     def display_plan(self):
-        print(self.plan_key)
         with open("Scripts/user_plan_key.txt","w") as file:
             file.write(str(self.plan_key))
         script_path = os.path.join("Scripts", "display_plan.py")
