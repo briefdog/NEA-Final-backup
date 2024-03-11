@@ -72,37 +72,34 @@ class window(ctk.CTk):
         delete_username = self.deleteaccount_username.get()
         delete_username = delete_username.lower()
         delete_password = self.deleteaccount_password.get()
-        if os.path.isfile("information.db"):
-            #connect to database
-            conn = sqlite3.connect("information.db")
-            #I encountered an error where the foreign key constraint was not working, but this helped: https://stackoverflow.com/questions/13641250/sqlite-delete-cascade-not-working
-            conn.execute("PRAGMA foreign_keys = ON")
-            cur = conn.cursor()
-            #if the username matches with a username in the database, it will continue
-            cur.execute("SELECT * FROM users WHERE username = ?",(delete_username,))
-            password_hash = cur.fetchone()
-            if password_hash is not None:
-                #hash password entered by user so it can be compared with hashed password in database
-                h = hashlib.sha256()
-                h.update(delete_password.encode("utf-8"))
-                delete_password = h.hexdigest()
-                #compare the password entered by user (now hashed) with the hashed password in database
-                if delete_password == password_hash[2]:
-                    #if the passwords match, the user will be asked if they really want to delete their account, and if user chooses "yes", account will be deleted, if the user chooses "no", account will not be deleted
-                    msg_box = messagebox.askquestion(title="Alert!",message = "Are you sure you want to delete the account?")
-                    if msg_box == "yes":
-                        cur.execute("DELETE FROM users WHERE username = ?",(delete_username,))
-                        conn.commit()
-                        conn.close()
-                        messagebox.showinfo(title = "Success", message = "Account has been deleted")
-                #if passwords do not match, an error message will pop up
-                else:
-                    messagebox.showerror(title= "Error", message = "Invalid password")
-            #if usernames do not match, an error message will pop up
+        #connect to database
+        conn = sqlite3.connect("information.db")
+        #I encountered an error where the foreign key constraint was not working, but this helped: https://stackoverflow.com/questions/13641250/sqlite-delete-cascade-not-working
+        conn.execute("PRAGMA foreign_keys = ON")
+        cur = conn.cursor()
+        #if the username matches with a username in the database, it will continue
+        cur.execute("SELECT * FROM users WHERE username = ?",(delete_username,))
+        password_hash = cur.fetchone()
+        if password_hash is not None:
+            #hash password entered by user so it can be compared with hashed password in database
+            h = hashlib.sha256()
+            h.update(delete_password.encode("utf-8"))
+            delete_password = h.hexdigest()
+            #compare the password entered by user (now hashed) with the hashed password in database
+            if delete_password == password_hash[2]:
+                #if the passwords match, the user will be asked if they really want to delete their account, and if user chooses "yes", account will be deleted, if the user chooses "no", account will not be deleted
+                msg_box = messagebox.askquestion(title="Alert!",message = "Are you sure you want to delete the account?")
+                if msg_box == "yes":
+                    cur.execute("DELETE FROM users WHERE username = ?",(delete_username,))
+                    conn.commit()
+                    conn.close()
+                    messagebox.showinfo(title = "Success", message = "Account has been deleted")
+            #if passwords do not match, an error message will pop up
             else:
-                messagebox.showerror(title="Error", message="No account has been found")
+                messagebox.showerror(title= "Error", message = "Invalid password")
+        #if usernames do not match, an error message will pop up
         else:
-            messagebox.showerror(title = "Error",message="Database does not exist")
+            messagebox.showerror(title="Error", message="No account has been found")
 
         self.username_entry.delete(0, END)
         self.password_entry.delete(0, END)
